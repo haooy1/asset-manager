@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 组织架构 ====================
+
+model Branch {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @db.VarChar(100)
+  code        String       @unique @db.VarChar(20)
+  address     String?      @db.VarChar(255)
+  contact     String?      @db.VarChar(50)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  departments Department[]
+  users       User[]
+  assets      Asset[]
+
+  @@map("branches")
+}
+
+model Department {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @db.VarChar(100)
+  branchId    String       @db.Uuid
+  branch      Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users       User[]
+
+  @@unique([name, branchId])
+  @@map("departments")
+}
+
+model User {
+  id            String       @id @default(uuid()) @db.Uuid
+  username      String       @unique @db.VarChar(50)
+  email         String?      @db.VarChar(100)
+  password      String       @db.VarChar(255)
+  realName      String       @db.VarChar(50)
+  role          String       @db.VarChar(20)
+  branchId      String?      @db.Uuid
+  branch        Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  departmentId  String?      @db.Uuid
+  department    Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  ownedAssets   Asset[]          @relation("AssetOwner")
+  createdAssets Asset[]          @relation("AssetCreator")
+  applications  Approval[]       @relation("ApprovalApplicant")
+  approvedBy    Approval[]       @relation("ApprovalApprover")
+  executedBy    Approval[]       @relation("ApprovalExecutor")
+
+  @@map("users")
+}
+
+// ==================== 资产管理 ====================
+
+enum AssetStatus {
+  IDLE
+  IN_USE
+  MAINTENANCE
+  SCRAPPED
+}
+
+enum AssetCategory {
+  PC
+  PERIPHERAL
+  NETWORK
+  SERVER_STORAGE
+  MOBILE
+  MEETING
+  SECURITY_DEVICE
+  SECURITY_DOCUMENT
+}
+
+model Asset {
+  id              String        @id @default(uuid()) @db.Uuid
+  assetNo         String        @unique @db.VarChar(50)
+  name            String        @db.VarChar(200)
+  model           String?       @db.VarChar(100)
+  brand           String?       @db.VarChar(100)
+  category        AssetCategory @default(PC)
+  status          AssetStatus   @default(IDLE)
+  purchaseDate    DateTime?     @db.Date
+  warrantyExpiry  DateTime?     @db.Date
+  assignedUserId  String?       @db.Uuid
+  assignedUser    User?         @relation("AssetOwner", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  branchId        String?       @db.Uuid
+  branch          Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  location        String?       @db.VarChar(100)
+  value           Decimal?      @db.Decimal(10, 2)
+  description     String?       @db.VarChar(500)
+  createdBy       String?       @db.Uuid
+  creator         User?         @relation("AssetCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  documents       AssetDocument[]
+  approvals       Approval[]
+
+  @@map("assets")
+}
+
+model AssetDocument {
+  id          String    @id @default(uuid()) @db.Uuid
+  assetId     String    @db.Uuid
+  asset       Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(200)
+  fileName    String    @db.VarChar(255)
+  filePath    String    @db.VarChar(500)
+  fileType    String?   @db.VarChar(50)
+  fileSize    Int?
+  expiryDate  DateTime? @db.Date
+  uploadedAt  DateTime  @default(now())
+
+  @@map("asset_documents")
+}
+
+// ==================== 审批流 ====================
+
+enum ApprovalType {
+  BORROW
+  RETURN
+  TRANSFER
+  SCRAP
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+}
+
+model Approval {
+  id            String         @id @default(uuid()) @db.Uuid
+  type          ApprovalType
+  status        ApprovalStatus @default(PENDING)
+  assetId       String         @db.Uuid
+  asset         Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  applicantId   String         @db.Uuid
+  applicant     User           @relation("ApprovalApplicant", fields: [applicantId], references: [id])
+  approverId    String?        @db.Uuid
+  approver      User?          @relation("ApprovalApprover", fields: [approverId], references: [id])
+  executorId    String?        @db.Uuid
+  executor      User?          @relation("ApprovalExecutor", fields: [executorId], references: [id])
+  reason        String?        @db.VarChar(500)
+  rejectReason  String?        @db.VarChar(500)
+  operatedAt    DateTime?      @db.Timestamptz()
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("approvals")
+}
+
+// ==================== 操作日志 ====================
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String?   @db.Uuid
+  username    String?   @db.VarChar(50)
+  action      String    @db.VarChar(50)
+  targetType  String    @db.VarChar(50)
+  targetId    String?   @db.VarChar(100)
+  detail      String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@map("audit_logs")
+}
+
+// ==================== 账户关联 (NextAuth) ====================
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @db.Uuid
+  type              String  @db.VarChar(50)
+  provider          String  @db.VarChar(50)
+  providerAccountId String  @db.VarChar(100)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(50)
+  scope             String? @db.VarChar(200)
+  id_token          String? @db.Text
+  session_state     String? @db.VarChar(200)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique @db.VarChar(255)
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamptz()
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime @db.Timestamptz()
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
