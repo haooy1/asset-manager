@@ -1,3 +1,11 @@
+import type React from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "IT 资产管理系统",
+  description: "企业 IT 硬件资产全生命周期管理平台",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

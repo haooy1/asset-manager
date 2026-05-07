@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, type AssetStatus, type AssetCategory, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
 
-export default function AssetListPage() {
+function AssetListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -163,5 +163,13 @@ export default function AssetListPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AssetListPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>}>
+      <AssetListContent />
+    </Suspense>
   );
 }
