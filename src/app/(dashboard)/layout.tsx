@@ -1,10 +1,11 @@
 "use client";
 
+import "@/shared/utils/cn";
 import { SessionProvider } from "next-auth/react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   {
@@ -45,10 +46,18 @@ const NAV_ITEMS = [
   },
 ];
 
+const MOBILE_NAV = [
+  { label: "首页", href: "/", icon: "🏠" },
+  { label: "资产", href: "/assets", icon: "📦" },
+  { label: "审批", href: "/approvals", icon: "✅" },
+  { label: "组织", href: "/org", icon: "👥" },
+];
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -67,45 +76,32 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   if (!session) return null;
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-56 flex-col bg-gray-900 text-white">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* 桌面端侧边栏 */}
+      <aside className="hidden md:flex md:w-56 md:flex-col md:bg-gray-900 md:text-white">
         <div className="flex h-14 items-center gap-2 border-b border-gray-700 px-4">
-          <div className="flex h-7 w-7 items-center justify-center rounded bg-blue-500 text-xs font-bold">
-            IT
-          </div>
+          <div className="flex h-7 w-7 items-center justify-center rounded bg-blue-500 text-xs font-bold">IT</div>
           <span className="text-sm font-medium">资产管理系统</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV_ITEMS.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href));
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
-              <Link
-                key={item.href}
-                href={item.href}
+              <Link key={item.href} href={item.href}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
-              >
-                {item.icon}
-                {item.label}
+                  isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}>
+                {item.icon}{item.label}
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t border-gray-700 px-3 py-3">
-          <div className="mb-2 truncate px-1 text-xs text-gray-400">
-            {session.user?.name}
-          </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
+          <div className="mb-2 truncate px-1 text-xs text-gray-400">{session.user?.name}</div>
+          <button onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
@@ -114,8 +110,57 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto bg-gray-50">
-        <div className="p-6">{children}</div>
+      {/* 移动端顶部导航 */}
+      <div className="md:hidden flex items-center justify-between bg-gray-900 text-white px-4 h-12">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-1 rounded hover:bg-gray-700">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="text-sm font-medium">IT资产管理系统</span>
+        <button onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-xs text-gray-400 hover:text-white px-2">
+          退出
+        </button>
+      </div>
+
+      {/* 移动端下拉菜单 */}
+      {sidebarOpen && (
+        <div className="md:hidden bg-gray-800 text-white px-3 py-2 space-y-1 border-t border-gray-700">
+          {MOBILE_NAV.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            return (
+              <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"}`}>
+                <span>{item.icon}</span>{item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 移动端底部导航栏 */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div className="flex">
+          {MOBILE_NAV.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            return (
+              <Link key={item.href} href={item.href}
+                className={`flex-1 flex flex-col items-center py-2 text-xs ${
+                  isActive ? "text-blue-600" : "text-gray-500"
+                }`}>
+                <span className="text-lg">{item.icon}</span>
+                <span className="mt-0.5">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 主内容区域 */}
+      <main className="flex-1 overflow-auto bg-gray-50 pb-16 md:pb-0">
+        <div className="p-4 md:p-6">{children}</div>
       </main>
     </div>
   );
