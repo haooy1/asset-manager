@@ -1,0 +1,10 @@
+{
+  "app": "IT-Asset-Manager",
+  "version": "1.0.0",
+  "description": "IT 硬件资产全生命周期管理系统",
+  "publisher": "haooy",
+  "website": "https://github.com/haooy1/asset-manager",
+  "category": "办公",
+  "installSize": "约 300MB",
+  "supports": ["麒麟 V10", "欧拉 EulerOS", "Ubuntu 20.04+", "Windows Server 2019+"]
+}
