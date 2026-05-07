@@ -76,11 +76,11 @@ if not exist ".env" (
         ) > .env
         echo   Created default .env
     )
-    echo.
+    echo/
     echo   !!! IMPORTANT !!!
     echo   Edit .env and set your PostgreSQL password:
     echo   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/asset_manager?schema=public
-    echo.
+    echo/
 ) else (
     echo   .env already exists, skipping.
 )
