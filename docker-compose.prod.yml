@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  app:
+    image: haooy1/asset-manager:${VERSION:-latest}
+    container_name: asset-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+    volumes:
+      - ./uploads:/app/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - asset-net
+
+  db:
+    image: postgres:15-alpine
+    container_name: asset-manager-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-asset_manager}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - asset-net
+
+volumes:
+  pgdata:
+
+networks:
+  asset-net:
+    driver: bridge

@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0-mvp",
+  "releaseDate": "2026-05-07",
+  "compatibleWith": ">=1.0.0",
+  "changelog": {
+    "1.0.0-mvp": [
+      "Phase 1.1: 基础设施 (认证/数据库/组织架构/UI布局/权限)",
+      "Phase 1.2: 资产管理中心 (8大品类CRUD/筛选/文档上传/仪表板)",
+      "Phase 1.3: 审批工作流 (领用/归还/调拨/报废 完整闭环)",
+      "Phase 2.1: 到期提醒 (维保/证书到期扫描+定时任务)",
+      "Docker 多架构支持 (amd64 + arm64，适配麒麟/欧拉)"
+    ]
+  },
+  "upgrade": {
+    "method": "docker",
+    "commands": [
+      "docker pull haooy1/asset-manager:latest",
+      "docker-compose down",
+      "docker-compose up -d",
+      "docker exec -it asset-manager npx prisma db push"
+    ]
+  }
+}
