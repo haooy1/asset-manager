@@ -61,6 +61,8 @@ model User {
   applications  Approval[]       @relation("ApprovalApplicant")
   approvedBy    Approval[]       @relation("ApprovalApprover")
   executedBy    Approval[]       @relation("ApprovalExecutor")
+  accounts      Account[]
+  sessions      Session[]
 
   @@map("users")
 }
