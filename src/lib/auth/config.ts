@@ -49,7 +49,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id as string;
         token.username = user.username as string;
         token.role = user.role as string;
-        token.branchId = user.branchId as string;
+        token.branchId = user.branchId as string | null;
       }
       return token;
     },
@@ -58,7 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.username = token.username as string;
         session.user.role = token.role as string;
-        session.user.branchId = token.branchId as string;
+        session.user.branchId = token.branchId as string | null;
       }
       return session;
     },

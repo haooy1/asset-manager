@@ -42,14 +42,18 @@ export async function getApprovals(params: {
 }) {
   const { view, userId, branchId, status, page = 1, pageSize = 20 } = params;
 
-  const where: Record<string, unknown> = {};
+  const where: {
+    applicantId?: string;
+    approverId?: string;
+    executorId?: string;
+    status?: ApprovalStatus;
+    asset?: { branchId: string };
+  } = {};
 
-  // 数据范围按分支隔离
   if (branchId) {
     where.asset = { branchId };
   }
 
-  // 视角条件
   if (view === "my") {
     where.applicantId = userId;
   } else if (view === "pending") {
@@ -60,15 +64,14 @@ export async function getApprovals(params: {
     where.status = "APPROVED";
   }
 
-  // 额外状态筛选（覆盖视角默认状态）
   if (status && (view === "my" || view === "all")) {
     where.status = status;
   }
 
   const [total, items] = await Promise.all([
-    db.approval.count({ where }),
+    db.approval.count({ where: where as Record<string, unknown> }),
     db.approval.findMany({
-      where,
+      where: where as Record<string, unknown>,
       include: {
         asset: { select: { id: true, assetNo: true, name: true, category: true } },
         applicant: { select: { id: true, realName: true, username: true } },

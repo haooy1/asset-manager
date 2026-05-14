@@ -49,15 +49,36 @@ export default function ApprovalDetailPage() {
 
   const id = window.location.pathname.split("/").pop() ?? "";
 
+  /**
+   * 获取审批详情数据
+   */
   const fetchDetail = () => {
     fetch(`/api/approvals/${id}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          let msg = `请求失败 (${r.status})`;
+          try {
+            const err = await r.json();
+            msg = err.message ?? msg;
+          } catch {}
+          throw new Error(msg);
+        }
+        return r.json();
+      })
       .then((d) => setApproval(d.data))
+      .catch((err: Error) => {
+        console.error("获取审批详情失败:", err.message);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchDetail(); }, [id]);
 
+  /**
+   * 执行审批操作（通过/驳回/执行）
+   * @param action - 审批操作类型
+   */
   const handleAction = async (action: "approve" | "reject" | "execute") => {
     setError("");
     setSubmitting(true);
@@ -67,14 +88,18 @@ export default function ApprovalDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, rejectReason: action === "reject" ? reason : undefined }),
       });
-      if (res.ok) {
-        fetchDetail();
+      if (!res.ok) {
+        let msg = "操作失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        setError(msg);
       } else {
-        const d = await res.json();
-        setError(d.message ?? "操作失败");
+        fetchDetail();
       }
     } catch {
-      setError("网络错误");
+      setError("网络错误，请重试");
     }
     setSubmitting(false);
   };

@@ -49,27 +49,65 @@ export default function OrgPage() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
+  /**
+   * 获取分支列表数据
+   */
   const fetchBranches = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/org/branches");
-      if (res.ok) setBranches((await res.json()).data ?? []);
+      if (!res.ok) {
+        let msg = "获取分支失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        console.error(msg);
+      } else {
+        setBranches((await res.json()).data ?? []);
+      }
     } catch { /* ignore */ }
     setLoading(false);
   };
+
+  /**
+   * 获取部门列表数据
+   */
   const fetchDepartments = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/org/departments");
-      if (res.ok) setDepartments((await res.json()).data ?? []);
+      if (!res.ok) {
+        let msg = "获取部门失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        console.error(msg);
+      } else {
+        setDepartments((await res.json()).data ?? []);
+      }
     } catch { /* ignore */ }
     setLoading(false);
   };
+
+  /**
+   * 获取用户列表数据
+   */
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/org/users");
-      if (res.ok) setUsers((await res.json()).data ?? []);
+      if (!res.ok) {
+        let msg = "获取用户失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        console.error(msg);
+      } else {
+        setUsers((await res.json()).data ?? []);
+      }
     } catch { /* ignore */ }
     setLoading(false);
   };
@@ -81,6 +119,10 @@ export default function OrgPage() {
     else fetchUsers();
   }, [tab, session]);
 
+  /**
+   * 提交新增组织实体表单（分支/部门/用户）
+   * @param e - React 表单提交事件
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -103,15 +145,23 @@ export default function OrgPage() {
           body: JSON.stringify({ username: form.username, password: form.password, realName: form.realName, role: form.role, branchId: form.branchId || undefined, departmentId: form.departmentId || undefined }),
         });
       }
+      if (!res.ok) {
+        let msg = "操作失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        setError(msg);
+        return;
+      }
       const data = await res.json();
-      if (!res.ok) { setError(data.message ?? "操作失败"); return; }
       setMsg(`${form.formType === "branch" ? "分支" : form.formType === "department" ? "部门" : "用户"}创建成功`);
       setShowForm(false);
       if (form.formType === "branch") fetchBranches();
       else if (form.formType === "department") fetchDepartments();
       else fetchUsers();
     } catch {
-      setError("网络错误");
+      setError("网络错误，请重试");
     }
   };
 

@@ -3,11 +3,16 @@ import { requireAuth } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 import type { UserRole } from "@/modules/org/types";
 
+/**
+ * 获取用户列表，支持按分支和部门筛选
+ * @param request - Next.js 请求对象，包含查询参数（branchId, departmentId）
+ * @returns 返回用户列表的 JSON 响应，或 500 错误响应
+ */
 export async function GET(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const { searchParams } = new URL(request.url);
     const branchId = searchParams.get("branchId") ?? undefined;
     const departmentId = searchParams.get("departmentId") ?? undefined;
@@ -19,11 +24,16 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ * 创建新用户
+ * @param request - Next.js 请求对象，包含用户数据的 JSON 请求体（username, password, realName, role, email, branchId, departmentId）
+ * @returns 返回创建的用户 JSON 响应（201），或 400/409/500 错误响应
+ */
 export async function POST(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const body = await request.json();
     const { username, password, realName, role, email, branchId, departmentId } = body;
 
@@ -53,11 +63,16 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * 更新用户信息
+ * @param request - Next.js 请求对象，包含用户数据的 JSON 请求体（id 及其他更新字段）
+ * @returns 返回更新后用户的 JSON 响应，或 400/500 错误响应
+ */
 export async function PUT(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const body = await request.json();
     const { id, ...data } = body;
     if (!id) {

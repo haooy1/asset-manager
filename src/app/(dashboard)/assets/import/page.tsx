@@ -14,10 +14,17 @@ export default function ImportPage() {
   } | null>(null);
   const [error, setError] = useState("");
 
+  /**
+   * 下载 CSV 导入模板
+   */
   const handleDownloadTemplate = () => {
     window.open("/api/assets/import", "_blank");
   };
 
+  /**
+   * 上传 CSV 文件并导入资产
+   * @param e - 文件输入变更事件
+   */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -29,14 +36,19 @@ export default function ImportPage() {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/assets/import", { method: "POST", body: formData });
-      const data = await res.json();
       if (!res.ok) {
-        setError(data.message ?? "导入失败");
+        let msg = "导入失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        setError(msg);
       } else {
+        const data = await res.json();
         setResult(data);
       }
     } catch {
-      setError("网络错误");
+      setError("网络错误，请重试");
     }
     setLoading(false);
     e.target.value = "";

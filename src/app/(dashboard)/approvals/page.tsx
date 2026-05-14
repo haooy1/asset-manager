@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getApprovals, type ApprovalInfo } from "@/modules/approvals/services";
+import { getApprovals } from "@/modules/approvals/services";
+import type { ApprovalInfo, ApprovalType, ApprovalStatus } from "@/modules/approvals/types";
 import { TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from "@/modules/approvals/types";
 
 export default function ApprovalListPage() {
@@ -18,8 +19,22 @@ export default function ApprovalListPage() {
     if (!session?.user) return;
     setLoading(true);
     fetch(`/api/approvals?view=${view}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          let msg = `请求失败 (${r.status})`;
+          try {
+            const err = await r.json();
+            msg = err.message ?? msg;
+          } catch {}
+          throw new Error(msg);
+        }
+        return r.json();
+      })
       .then((d) => setItems(d.items ?? []))
+      .catch((err) => {
+        console.error("获取审批列表失败:", err.message);
+        setItems([]);
+      })
       .finally(() => setLoading(false));
   }, [view, session]);
 
@@ -81,14 +96,14 @@ export default function ApprovalListPage() {
               ) : (
                 items.map((ap) => (
                   <tr key={ap.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{TYPE_LABELS[ap.type]}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{TYPE_LABELS[ap.type as ApprovalType]}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {ap.asset.name} <span className="text-xs text-gray-400">{ap.asset.assetNo}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{ap.applicant?.realName}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[ap.status]}`}>
-                        {STATUS_LABELS[ap.status]}
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[ap.status as ApprovalStatus]}`}>
+                        {STATUS_LABELS[ap.status as ApprovalStatus]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">

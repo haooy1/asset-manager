@@ -33,29 +33,39 @@ export default function DashboardPage() {
   const [docItems, setDocItems] = useState<DocReminderItem[]>([]);
 
   useEffect(() => {
+    /**
+     * 获取资产统计数据（总数、使用中、即将到期）
+     */
     async function fetchStats() {
-      const res = await fetch("/api/assets?page=1&pageSize=9999");
-      if (!res.ok) return;
-      const data = await res.json();
-      const now = new Date();
-      const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      const expiring = data.items.filter(
-        (a: { warrantyExpiry: string }) =>
-          a.warrantyExpiry && new Date(a.warrantyExpiry) < thirtyDaysLater,
-      );
-      setStats({
-        total: data.total,
-        inUse: data.items.filter((a: { status: string }) => a.status === "IN_USE").length,
-        expiring: expiring.length,
-      });
+      try {
+        const res = await fetch("/api/assets?page=1&pageSize=9999");
+        if (!res.ok) return;
+        const data = await res.json();
+        const now = new Date();
+        const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const expiring = data.items.filter(
+          (a: { warrantyExpiry: string }) =>
+            a.warrantyExpiry && new Date(a.warrantyExpiry) < thirtyDaysLater,
+        );
+        setStats({
+          total: data.total,
+          inUse: data.items.filter((a: { status: string }) => a.status === "IN_USE").length,
+          expiring: expiring.length,
+        });
+      } catch {}
     }
 
+    /**
+     * 获取维保和证书到期提醒数据
+     */
     async function fetchReminders() {
-      const res = await fetch("/api/reminders?days=30");
-      if (!res.ok) return;
-      const data = await res.json();
-      setWarrantyItems(data.warranty ?? []);
-      setDocItems(data.documents ?? []);
+      try {
+        const res = await fetch("/api/reminders?days=30");
+        if (!res.ok) return;
+        const data = await res.json();
+        setWarrantyItems(data.warranty ?? []);
+        setDocItems(data.documents ?? []);
+      } catch {}
     }
 
     fetchStats();

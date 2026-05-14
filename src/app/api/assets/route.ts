@@ -2,11 +2,16 @@ import { getAssetList, createAsset } from "@/modules/assets/services";
 import { requireAuth } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
+/**
+ * 获取资产列表，支持按分支/状态/品类/关键词筛选
+ * @param request - HTTP 请求对象
+ * @returns 资产列表分页结果
+ */
 export async function GET(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const { searchParams } = new URL(request.url);
     const params = {
       branchId: searchParams.get("branchId") ?? undefined,
@@ -27,11 +32,16 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ * 创建新资产（入库）
+ * @param request - HTTP 请求对象，body 包含资产信息
+ * @returns 创建的资产数据
+ */
 export async function POST(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const body = await request.json();
     const { assetNo, name, category } = body;
 

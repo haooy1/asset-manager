@@ -2,11 +2,16 @@ import { getWarrantyReminders, getDocumentReminders, getExpiredWarrantyAssets, g
 import { requireAuth } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
+/**
+ * 获取维保和文档到期提醒，支持按类型和天数筛选
+ * @param request - Next.js 请求对象，包含查询参数（type, days）
+ * @returns 返回提醒数据的 JSON 响应，或 500 错误响应
+ */
 export async function GET(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") ?? "all";
     const days = Number(searchParams.get("days")) || 30;

@@ -2,11 +2,16 @@ import { getDepartments, createDepartment, updateDepartment } from "@/modules/or
 import { requireAuth } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
+/**
+ * 获取部门列表，支持按分支筛选
+ * @param request - Next.js 请求对象，包含查询参数（branchId）
+ * @returns 返回部门列表的 JSON 响应，或 500 错误响应
+ */
 export async function GET(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const { searchParams } = new URL(request.url);
     const branchId = searchParams.get("branchId") ?? undefined;
     const departments = await getDepartments(branchId);
@@ -17,11 +22,16 @@ export async function GET(request: Request) {
   }
 }
 
+/**
+ * 创建新部门
+ * @param request - Next.js 请求对象，包含部门数据的 JSON 请求体（name, branchId）
+ * @returns 返回创建的部门 JSON 响应（201），或 400/500 错误响应
+ */
 export async function POST(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const body = await request.json();
     const { name, branchId } = body;
 

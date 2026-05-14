@@ -12,11 +12,21 @@ export default function AssetDetailPage() {
   const [asset, setAsset] = useState<AssetInfo & { documents?: { id: string; name: string; fileName: string; filePath: string; expiryDate: string | null; uploadedAt: string }[]; approvals?: { id: string; type: string; status: string; applicant: { id: string; realName: string } | null; approver: { id: string; realName: string } | null; createdAt: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * 获取资产详情数据
+   */
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/assets/${id}`);
-      if (res.ok) {
+      if (!res.ok) {
+        let msg = "获取资产详情失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        console.error(msg);
+      } else {
         const result = await res.json();
         setAsset(result.data);
       }

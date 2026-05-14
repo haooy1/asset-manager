@@ -16,6 +16,9 @@ function AssetListContent() {
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
 
+  /**
+   * 获取资产列表数据（支持关键词、状态、品类筛选及分页）
+   */
   const fetchData = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -27,7 +30,14 @@ function AssetListContent() {
 
     try {
       const res = await fetch(`/api/assets?${params}`);
-      if (res.ok) {
+      if (!res.ok) {
+        let msg = "获取资产列表失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        console.error(msg);
+      } else {
         setData(await res.json());
       }
     } catch {

@@ -21,10 +21,18 @@ export default function NewAssetPage() {
     description: "",
   });
 
+  /**
+   * 处理表单输入变更
+   * @param e - React 表单变更事件
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  /**
+   * 提交新增资产表单
+   * @param e - React 表单提交事件
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -40,14 +48,18 @@ export default function NewAssetPage() {
         }),
       });
 
-      const result = await res.json();
-
       if (!res.ok) {
-        setError(result.message ?? "创建失败");
+        let msg = "创建失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        setError(msg);
         setLoading(false);
         return;
       }
 
+      const result = await res.json();
       router.push(`/assets/${result.data.id}`);
     } catch {
       setError("网络错误，请重试");

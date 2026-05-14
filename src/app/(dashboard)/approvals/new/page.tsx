@@ -17,13 +17,25 @@ export default function NewApprovalPage() {
     reason: "",
   });
 
+  /**
+   * 加载可用资产列表（状态为 IDLE 且非安全文档）
+   */
   useEffect(() => {
     if (!session) return;
-    fetch("/api/assets?status=IDLE&pageSize=9999")
-      .then((r) => r.json())
-      .then((d) => setAssets(d.items.filter((a: AssetInfo) => a.category !== "SECURITY_DOCUMENT")));
+    (async () => {
+      try {
+        const r = await fetch("/api/assets?status=IDLE&pageSize=9999");
+        if (!r.ok) return;
+        const d = await r.json();
+        setAssets(d.items.filter((a: AssetInfo) => a.category !== "SECURITY_DOCUMENT"));
+      } catch {}
+    })();
   }, [session]);
 
+  /**
+   * 提交审批申请表单
+   * @param e - React 表单提交事件
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -35,11 +47,20 @@ export default function NewApprovalPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (!res.ok) {
+        let msg = "发起失败";
+        try {
+          const err = await res.json();
+          msg = err.message ?? msg;
+        } catch {}
+        setError(msg);
+        setLoading(false);
+        return;
+      }
       const result = await res.json();
-      if (!res.ok) { setError(result.message ?? "发起失败"); setLoading(false); return; }
       router.push(`/approvals/${result.data.id}`);
     } catch {
-      setError("网络错误");
+      setError("网络错误，请重试");
       setLoading(false);
     }
   };

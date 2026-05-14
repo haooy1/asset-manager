@@ -1,28 +1,38 @@
 import { getAssetList, getAssetById } from "@/modules/assets/services";
 import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
-import type { AssetStatus, AssetCategory } from "@/modules/assets/types";
+import type { AssetStatus, AssetCategory, AssetInfo } from "@/modules/assets/types";
 import { CATEGORY_LABELS, STATUS_LABELS } from "@/modules/assets/types";
 
-function formatDate(d: string | null): string {
+/**
+ * 将日期值格式化为中文本地化日期格式
+ * @param d - Date 对象、ISO 日期字符串或 null
+ * @returns 格式化后的日期字符串，输入为 null 时返回空字符串
+ */
+function formatDate(d: Date | string | null): string {
   if (!d) return "";
   return new Date(d).toLocaleDateString("zh-CN");
 }
 
+/**
+ * 导出资产数据，支持 CSV 和 JSON 格式，支持按 ID 列表或筛选条件导出
+ * @param request - Next.js 请求对象，包含查询参数（format, ids, status, category, keyword）
+ * @returns 返回 CSV 文件下载响应或 JSON 数据响应，或 500 错误响应
+ */
 export async function GET(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get("format") ?? "csv";
     const ids = searchParams.get("ids");
 
-    let items: Awaited<ReturnType<typeof getAssetList>>["items"];
+    let items: AssetInfo[];
 
     if (ids) {
       const idList = ids.split(",");
-      items = await Promise.all(idList.map((id) => getAssetById(id).then((a) => a!)));
+      items = await Promise.all(idList.map((id) => getAssetById(id).then((a) => a!))) as unknown as AssetInfo[];
     } else {
       const result = await getAssetList({
         status: searchParams.get("status") as AssetStatus | undefined,
@@ -31,7 +41,7 @@ export async function GET(request: Request) {
         page: 1,
         pageSize: 9999,
       });
-      items = result.items;
+      items = result.items as unknown as AssetInfo[];
     }
 
     if (format === "csv") {
@@ -40,10 +50,10 @@ export async function GET(request: Request) {
         [
           a.assetNo,
           `"${(a.name ?? "").replace(/"/g, '""')}"`,
-          CATEGORY_LABELS[a.category],
+          CATEGORY_LABELS[a.category as AssetCategory],
           a.model ?? "",
           a.brand ?? "",
-          STATUS_LABELS[a.status],
+          STATUS_LABELS[a.status as AssetStatus],
           formatDate(a.purchaseDate),
           formatDate(a.warrantyExpiry),
           a.assignedUser?.realName ?? "",

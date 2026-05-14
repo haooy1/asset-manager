@@ -3,14 +3,19 @@ import { getAssetList } from "@/modules/assets/services";
 import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
+/**
+ * 通过 CSV 文件批量导入资产
+ * @param request - Next.js 请求对象，包含 FormData（file）
+ * @returns 返回导入结果的 JSON 响应，或 400/401/500 错误响应
+ */
 export async function POST(request: Request) {
-  const authError = await requireAuth();
-  if (authError) return authError;
-
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
+
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -37,15 +42,24 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * 获取 CSV 导入模板文件
+ * @returns 返回 CSV 模板文件的下载响应，或 500 错误响应
+ */
 export async function GET() {
-  const authError = await requireAuth();
-  if (authError) return authError;
+  try {
+    const authError = await requireAuth();
+    if (authError) return authError;
 
-  const template = getCSVTemplate();
-  return new Response(template, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=import-template.csv",
-    },
-  });
+    const template = getCSVTemplate();
+    return new Response(template, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": "attachment; filename=import-template.csv",
+      },
+    });
+  } catch (error) {
+    console.error("获取导入模板失败:", error);
+    return NextResponse.json({ error: "INTERNAL_ERROR", message: "服务器内部错误" }, { status: 500 });
+  }
 }

@@ -143,7 +143,7 @@ export async function importAssets(
       if (branchId) data.branchId = branchId;
       if (createdBy) data.createdBy = createdBy;
 
-      await db.asset.create({ data });
+      await db.asset.create({ data: data as Parameters<typeof db.asset.create>[0]["data"] });
       success++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "未知错误";
