@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, type AssetStatus, type AssetCategory, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
 
 function AssetListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
 
   const [data, setData] = useState<{ total: number; items: AssetInfo[] }>({ total: 0, items: [] });
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,8 @@ function AssetListContent() {
   const [status, setStatus] = useState(searchParams.get("status") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+
+  const isEmployee = session?.user?.role === "EMPLOYEE";
 
   /**
    * 获取资产列表数据（支持关键词、状态、品类筛选及分页）
@@ -56,12 +60,14 @@ function AssetListContent() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">资产列表</h1>
-        <Link
-          href="/assets/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + 新增资产
-        </Link>
+        {!isEmployee && (
+          <Link
+            href="/assets/new"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + 新增资产
+          </Link>
+        )}
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">

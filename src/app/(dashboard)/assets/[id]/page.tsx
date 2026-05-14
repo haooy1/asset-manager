@@ -2,15 +2,19 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, } from "@/modules/assets/types";
 
 export default function AssetDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const id = params.id as string;
 
   const [asset, setAsset] = useState<AssetInfo & { documents?: { id: string; name: string; fileName: string; filePath: string; expiryDate: string | null; uploadedAt: string }[]; approvals?: { id: string; type: string; status: string; applicant: { id: string; realName: string } | null; approver: { id: string; realName: string } | null; createdAt: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isEmployee = session?.user?.role === "EMPLOYEE";
 
   /**
    * 获取资产详情数据
@@ -149,12 +153,14 @@ export default function AssetDetailPage() {
           <div className="rounded-lg border bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-gray-900">操作</h3>
             <div className="space-y-2">
-              <button
-                onClick={() => router.push(`/assets/${asset.id}/edit`)}
-                className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-              >
-                编辑信息
-              </button>
+              {!isEmployee && (
+                <button
+                  onClick={() => router.push(`/assets/${asset.id}/edit`)}
+                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  编辑信息
+                </button>
+              )}
               {asset.status === "IDLE" && (
                 <button className="block w-full rounded-md bg-blue-600 px-3 py-2 text-left text-sm text-white hover:bg-blue-700">
                   发起领用

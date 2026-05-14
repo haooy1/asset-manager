@@ -13,15 +13,23 @@ export interface AssetQueryParams {
   keyword?: string;
   page?: number;
   pageSize?: number;
+  userRole?: string;
+  userId?: string;
 }
 
 /**
  * 分页查询资产列表，支持按分支/状态/品类/关键词筛选
+ * 普通员工（EMPLOYEE）自动限制为仅查看已分配给自己的资产
  */
 export async function getAssetList(params: AssetQueryParams) {
-  const { branchId, status, category, keyword, page = 1, pageSize = 20 } = params;
+  const { branchId, status, category, keyword, page = 1, pageSize = 20, userRole, userId } = params;
 
   const where: Record<string, unknown> = {};
+
+  if (userRole === "EMPLOYEE" && userId) {
+    where.assignedUserId = userId;
+  }
+
   if (branchId) where.branchId = branchId;
   if (status) where.status = status;
   if (category) where.category = category;

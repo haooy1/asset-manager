@@ -1,32 +1,55 @@
 import { getApprovalById, reviewApproval, executeApproval } from "@/modules/approvals/services";
 import type { ApprovalType } from "@/modules/approvals/types";
-import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
+import { requireAuth, requireRole, getCurrentUser } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
 /**
- * 获取指定审批单的详细信息
- * @param _request - Next.js 请求对象（未使用）
- * @param params - 路由参数，包含审批单 ID
- * @returns 返回审批单详情的 JSON 响应，或 404/500 错误响应
+ * 获取单个审批单详情
+ * - 申请人可查看自己的审批
+ * - DEPT_MANAGER/BRANCH_ADMIN 可查看同分支的审批
+ * - SUPER_ADMIN 可查看所有审批
+ * @param request - HTTP 请求对象
+ * @param params - 路由参数，包含审批单 id
+ * @returns 审批详情或 403/404 错误
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authError = await requireAuth();
     if (authError) return authError;
 
-    const { id } = await params;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+
+    const id = (await params).id;
     const approval = await getApprovalById(id);
     if (!approval) {
-      return NextResponse.json({ error: "NOT_FOUND", message: "审批单不存在" }, { status: 404 });
+      return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
     }
+
+    if (user.role !== "SUPER_ADMIN") {
+      const isApplicant = approval.applicantId === user.id;
+      const isSameBranch = user.branchId && approval.asset?.branchId === user.branchId;
+      const hasManagementRole = user.role === "BRANCH_ADMIN" || user.role === "DEPT_MANAGER";
+
+      if (!isApplicant && !(isSameBranch && hasManagementRole)) {
+        return NextResponse.json(
+          { error: "FORBIDDEN", message: "无权查看该审批" },
+          { status: 403 },
+        );
+      }
+    }
+
     return NextResponse.json({ data: approval });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("获取审批详情失败:", message, error instanceof Error ? error.stack : "");
-    return NextResponse.json({ error: "INTERNAL_ERROR", message }, { status: 500 });
+    console.error("获取审批详情失败:", message);
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message },
+      { status: 500 },
+    );
   }
 }
 
@@ -52,6 +75,9 @@ export async function POST(
     const { action } = body;
 
     if (action === "approve" || action === "reject") {
+      const roleError = await requireRole("SUPER_ADMIN", "BRANCH_ADMIN", "DEPT_MANAGER");
+      if (roleError) return roleError;
+
       const result = await reviewApproval(
         id,
         action === "approve" ? "APPROVED" : "REJECTED",
@@ -62,6 +88,9 @@ export async function POST(
     }
 
     if (action === "execute") {
+      const roleError = await requireRole("SUPER_ADMIN", "BRANCH_ADMIN");
+      if (roleError) return roleError;
+
       const approval = await getApprovalById(id);
       if (!approval) {
         return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });

@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 
 /**
  * 获取审批列表，支持按视图类型、状态等条件筛选
+ * - view=my: 我的申请（所有角色可用）
+ * - view=pending: 待审批（DEPT_MANAGER+）
+ * - view=execute: 待执行（SUPER_ADMIN/BRANCH_ADMIN）
+ * - view=all: 全部审批（SUPER_ADMIN/BRANCH_ADMIN）
  * @param request - Next.js 请求对象，包含查询参数（view, status, page, pageSize）
- * @returns 返回审批列表分页结果的 JSON 响应，或 401/500 错误响应
+ * @returns 返回审批列表分页结果的 JSON 响应，或 401/403/500 错误响应
  */
 export async function GET(request: Request) {
   try {
@@ -16,10 +20,20 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
+    const view = (searchParams.get("view") as "my" | "pending" | "execute" | "all") ?? "my";
+
+    if (view !== "my" && user.role === "EMPLOYEE") {
+      return NextResponse.json(
+        { error: "FORBIDDEN", message: "权限不足" },
+        { status: 403 },
+      );
+    }
+
     const result = await getApprovals({
-      view: (searchParams.get("view") as "my" | "pending" | "execute" | "all") ?? "my",
+      view,
       userId: user.id,
       branchId: user.branchId,
+      userRole: user.role,
       status: searchParams.get("status") as never,
       page: Number(searchParams.get("page")) || 1,
       pageSize: Number(searchParams.get("pageSize")) || 20,

@@ -1,9 +1,10 @@
 import { getAssetList, createAsset } from "@/modules/assets/services";
-import { requireAuth } from "@/lib/auth/middleware";
+import { requireAuth, requireRole, getCurrentUser } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
 /**
  * 获取资产列表，支持按分支/状态/品类/关键词筛选
+ * 普通员工仅能看到已分配给自己的资产
  * @param request - HTTP 请求对象
  * @returns 资产列表分页结果
  */
@@ -11,6 +12,8 @@ export async function GET(request: Request) {
   try {
     const authError = await requireAuth();
     if (authError) return authError;
+
+    const user = await getCurrentUser();
 
     const { searchParams } = new URL(request.url);
     const params = {
@@ -20,6 +23,8 @@ export async function GET(request: Request) {
       keyword: searchParams.get("keyword") ?? undefined,
       page: Number(searchParams.get("page")) || 1,
       pageSize: Number(searchParams.get("pageSize")) || 20,
+      userRole: user?.role ?? undefined,
+      userId: user?.id ?? undefined,
     };
     const result = await getAssetList(params);
     return NextResponse.json(result);
@@ -39,7 +44,7 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const authError = await requireAuth();
+    const authError = await requireRole("SUPER_ADMIN", "BRANCH_ADMIN", "DEPT_MANAGER");
     if (authError) return authError;
 
     const body = await request.json();
@@ -52,7 +57,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const asset = await createAsset(body);
+    const normalizedBody = {
+      ...body,
+      purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : null,
+      warrantyExpiry: body.warrantyExpiry ? new Date(body.warrantyExpiry) : null,
+      value: body.value != null && body.value !== "" ? Number(body.value) : undefined,
+      model: body.model || null,
+      brand: body.brand || null,
+      location: body.location || null,
+      description: body.description || null,
+    };
+
+    const asset = await createAsset(normalizedBody);
     return NextResponse.json({ data: asset }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {

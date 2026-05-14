@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApprovals } from "@/modules/approvals/services";
 import type { AssetInfo } from "@/modules/assets/types";
@@ -47,7 +47,7 @@ export default function ApprovalDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const id = window.location.pathname.split("/").pop() ?? "";
+  const { id } = useParams<{ id: string }>();
 
   /**
    * 获取审批详情数据
@@ -153,7 +153,7 @@ export default function ApprovalDetailPage() {
         </div>
 
         <div className="space-y-4">
-          {(approval.status === "PENDING" && session?.user?.role === "DEPT_MANAGER") && (
+          {(approval.status === "PENDING" && (session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "BRANCH_ADMIN" || session?.user?.role === "DEPT_MANAGER")) && (
             <div className="rounded-lg border bg-white p-4 shadow-sm">
               <h3 className="mb-3 text-sm font-semibold text-gray-900">审批操作</h3>
               <div className="space-y-3">
