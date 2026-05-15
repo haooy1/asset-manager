@@ -48,6 +48,7 @@ export async function getAssetList(params: AssetQueryParams) {
       include: {
         assignedUser: { select: { id: true, realName: true } },
         branch: { select: { id: true, name: true } },
+        categoryGroup: { select: { id: true, name: true, label: true } },
         _count: { select: { documents: true, approvals: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -69,6 +70,12 @@ export async function getAssetById(id: string) {
       assignedUser: { select: { id: true, realName: true, username: true } },
       branch: { select: { id: true, name: true } },
       creator: { select: { id: true, realName: true } },
+      categoryGroup: { select: { id: true, name: true, label: true } },
+      customFieldValues: {
+        include: {
+          field: { select: { id: true, name: true, label: true, fieldType: true, options: true } },
+        },
+      },
       documents: true,
       approvals: {
         include: {
@@ -83,29 +90,65 @@ export async function getAssetById(id: string) {
 }
 
 /**
- * 创建新资产（入库）
+ * 创建新资产（入库），同时保存自定义字段值
  */
 export async function createAsset(input: CreateAssetInput) {
-  return db.asset.create({
-    data: input,
+  const { customFieldValues, categoryGroupId, ...assetData } = input;
+
+  const asset = await db.asset.create({
+    data: {
+      ...assetData,
+      ...(categoryGroupId && { categoryGroupId }),
+    },
     include: {
       branch: { select: { id: true, name: true } },
     },
   });
+
+  if (customFieldValues && customFieldValues.length > 0) {
+    await db.customFieldValue.createMany({
+      data: customFieldValues.map((fv) => ({
+        assetId: asset.id,
+        fieldId: fv.fieldId,
+        value: fv.value,
+      })),
+    });
+  }
+
+  return asset;
 }
 
 /**
- * 更新资产信息
+ * 更新资产信息，同时更新自定义字段值（upsert）
  */
 export async function updateAsset(id: string, input: UpdateAssetInput) {
-  return db.asset.update({
+  const { customFieldValues, categoryGroupId, ...assetData } = input;
+
+  const asset = await db.asset.update({
     where: { id },
-    data: input,
+    data: {
+      ...assetData,
+      ...(categoryGroupId !== undefined && { categoryGroupId: categoryGroupId || null }),
+    },
     include: {
       assignedUser: { select: { id: true, realName: true } },
       branch: { select: { id: true, name: true } },
     },
   });
+
+  if (customFieldValues) {
+    if (customFieldValues.length > 0) {
+      for (const fv of customFieldValues) {
+        await db.customFieldValue.upsert({
+          where: { assetId_fieldId: { assetId: id, fieldId: fv.fieldId } },
+          create: { assetId: id, fieldId: fv.fieldId, value: fv.value },
+          update: { value: fv.value },
+        });
+      }
+    }
+  }
+
+  return asset;
 }
 
 /**

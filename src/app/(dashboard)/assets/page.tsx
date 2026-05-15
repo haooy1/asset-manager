@@ -135,7 +135,9 @@ function AssetListContent() {
                           {asset.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{CATEGORY_LABELS[asset.category]}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {asset.categoryGroup?.label || CATEGORY_LABELS[asset.category]}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[asset.status]}`}>
                           {STATUS_LABELS[asset.status]}

@@ -5,7 +5,7 @@ export type AssetStatus = (typeof ASSET_STATUS)[number];
 
 export const ASSET_CATEGORIES = [
   "PC", "PERIPHERAL", "NETWORK", "SERVER_STORAGE",
-  "MOBILE", "MEETING", "SECURITY_DEVICE", "SECURITY_DOCUMENT",
+  "MOBILE", "MEETING", "SECURITY_DEVICE", "SECURITY_DOCUMENT", "CUSTOM",
 ] as const;
 export type AssetCategory = (typeof ASSET_CATEGORIES)[number];
 
@@ -25,6 +25,7 @@ export const CATEGORY_LABELS: Record<AssetCategory, string> = {
   MEETING: "会议设备",
   SECURITY_DEVICE: "网络安全设备",
   SECURITY_DOCUMENT: "安全文档",
+  CUSTOM: "自定义类型",
 };
 
 export const STATUS_COLORS: Record<AssetStatus, string> = {
@@ -54,6 +55,14 @@ export interface AssetInfo {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  categoryGroupId?: string | null;
+  categoryGroup?: { id: string; name: string; label: string } | null;
+  customFieldValues?: {
+    id: string;
+    fieldId: string;
+    value: string;
+    field?: { id: string; name: string; label: string; fieldType: string; options: string | null };
+  }[];
   _count?: { documents: number; approvals: number };
 }
 
@@ -82,6 +91,8 @@ export type CreateAssetInput = {
   value?: number;
   description?: string;
   createdBy?: string;
+  categoryGroupId?: string;
+  customFieldValues?: { fieldId: string; value: string }[];
 };
 
 export type UpdateAssetInput = Partial<CreateAssetInput> & {

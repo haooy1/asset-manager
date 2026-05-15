@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@/modules/assets/types";
+import type { CategoryGroupInfo, CustomFieldInfo, CustomFieldValueInput } from "@/modules/assets/custom-types";
 
 export default function NewAssetPage() {
   const router = useRouter();
@@ -21,31 +22,100 @@ export default function NewAssetPage() {
     description: "",
   });
 
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroupInfo[]>([]);
+  const [selectedCategoryGroupId, setSelectedCategoryGroupId] = useState("");
+  const [customFields, setCustomFields] = useState<CustomFieldInfo[]>([]);
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+
+  /**
+   * 加载所有设备类型
+   */
+  useEffect(() => {
+    fetch("/api/category-groups")
+      .then(res => res.json())
+      .then(({ data }) => {
+        if (data) setCategoryGroups(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  /**
+   * 当选择的品类或自定义类型变更时，加载对应的自定义字段
+   */
+  const loadCustomFields = useCallback(async (groupId: string) => {
+    if (!groupId) {
+      setCustomFields([]);
+      setFieldValues({});
+      return;
+    }
+    try {
+      const res = await fetch(`/api/category-groups/${groupId}/fields`);
+      if (!res.ok) { setCustomFields([]); return; }
+      const { data } = await res.json();
+      setCustomFields(data || []);
+      setFieldValues({});
+    } catch {
+      setCustomFields([]);
+    }
+  }, []);
+
+  /**
+   * 根据选中的 category 自动匹配 CategoryGroup
+   */
+  useEffect(() => {
+    const matched = categoryGroups.find(g => g.name === form.category);
+    if (matched) {
+      setSelectedCategoryGroupId(matched.id);
+      loadCustomFields(matched.id);
+    }
+  }, [form.category, categoryGroups, loadCustomFields]);
+
+  /**
+   * 处理自定义类型选择
+   */
+  const handleCustomTypeChange = (groupId: string) => {
+    setSelectedCategoryGroupId(groupId);
+    loadCustomFields(groupId);
+  };
+
+  /**
+   * 处理自定义字段值变更
+   */
+  const handleFieldValueChange = (fieldId: string, value: string) => {
+    setFieldValues(prev => ({ ...prev, [fieldId]: value }));
+  };
+
   /**
    * 处理表单输入变更
-   * @param e - React 表单变更事件
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   /**
-   * 提交新增资产表单
-   * @param e - React 表单提交事件
+   * 提交新增资产表单（含自定义字段）
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    const customFieldValues: CustomFieldValueInput[] = customFields
+      .filter(f => fieldValues[f.id] !== undefined && fieldValues[f.id] !== "")
+      .map(f => ({ fieldId: f.id, value: fieldValues[f.id] }));
+
+    const body: Record<string, unknown> = {
+      ...form,
+      value: form.value ? Number(form.value) : undefined,
+      categoryGroupId: selectedCategoryGroupId || undefined,
+      customFieldValues,
+    };
+
     try {
       const res = await fetch("/api/assets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          value: form.value ? Number(form.value) : undefined,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -66,6 +136,9 @@ export default function NewAssetPage() {
       setLoading(false);
     }
   };
+
+  const customGroups = categoryGroups.filter(g => !g.isBuiltin);
+  const showCustomTypeSelector = form.category === "CUSTOM";
 
   if (form.category === "SECURITY_DOCUMENT") {
     return (
@@ -155,6 +228,20 @@ export default function NewAssetPage() {
                 ))}
               </select>
             </div>
+
+            {showCustomTypeSelector && customGroups.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">选择自定义类型 *</label>
+                <select value={selectedCategoryGroupId} onChange={e => handleCustomTypeChange(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                  <option value="">-- 请选择 --</option>
+                  {customGroups.map(g => (
+                    <option key={g.id} value={g.id}>{g.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700">购置日期</label>
               <input name="purchaseDate" type="date" value={form.purchaseDate} onChange={handleChange}
@@ -177,6 +264,98 @@ export default function NewAssetPage() {
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
             </div>
           </div>
+
+          {/* 自定义字段区域 */}
+          {customFields.length > 0 && (
+            <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4">
+              <h3 className="mb-3 text-sm font-medium text-blue-800">
+                {form.category === "CUSTOM"
+                  ? `${categoryGroups.find(g => g.id === selectedCategoryGroupId)?.label || ""} — 自定义信息`
+                  : `${CATEGORY_LABELS[form.category]} — 自定义信息`}
+              </h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {customFields.map((field) => {
+                  const value = fieldValues[field.id] ?? "";
+
+                  if (field.fieldType === "BOOLEAN") {
+                    return (
+                      <label key={field.id} className="flex items-center gap-2 pt-2">
+                        <input type="checkbox" checked={value === "true"}
+                          onChange={e => handleFieldValueChange(field.id, e.target.checked ? "true" : "false")}
+                          className="rounded" />
+                        <span className="text-sm text-gray-700">{field.label}{field.required ? " *" : ""}</span>
+                      </label>
+                    );
+                  }
+
+                  if (field.fieldType === "SELECT" && field.options) {
+                    const opts = field.options.split(",").map(o => o.trim());
+                    return (
+                      <div key={field.id}>
+                        <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                        <select value={value}
+                          onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                          <option value="">-- 请选择 --</option>
+                          {opts.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
+
+                  if (field.fieldType === "DATE") {
+                    return (
+                      <div key={field.id}>
+                        <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                        <input type="date" value={value}
+                          onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                      </div>
+                    );
+                  }
+
+                  if (field.fieldType === "NUMBER") {
+                    return (
+                      <div key={field.id}>
+                        <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                        <input type="number" step="any" value={value}
+                          onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                      </div>
+                    );
+                  }
+
+                  if (field.fieldType === "LONGTEXT") {
+                    return (
+                      <div key={field.id} className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                        <textarea value={value}
+                          onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                          required={field.required} rows={3}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={field.id}>
+                      <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                      <input value={value}
+                        onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                        required={field.required}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700">备注</label>
             <textarea name="description" value={form.description} onChange={handleChange} rows={3}

@@ -26,7 +26,7 @@ interface ImportResult {
   errors: ImportError[];
 }
 
-const VALID_CATEGORIES = ["PC","PERIPHERAL","NETWORK","SERVER_STORAGE","MOBILE","MEETING","SECURITY_DEVICE","SECURITY_DOCUMENT"];
+const VALID_CATEGORIES = ["PC","PERIPHERAL","NETWORK","SERVER_STORAGE","MOBILE","MEETING","SECURITY_DEVICE","SECURITY_DOCUMENT","CUSTOM"];
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];

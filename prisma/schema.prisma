@@ -85,6 +85,7 @@ enum AssetCategory {
   MEETING
   SECURITY_DEVICE
   SECURITY_DOCUMENT
+  CUSTOM
 }
 
 model Asset {
@@ -109,8 +110,12 @@ model Asset {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  documents       AssetDocument[]
-  approvals       Approval[]
+  categoryGroupId String?          @db.Uuid
+  categoryGroup   CategoryGroup?   @relation(fields: [categoryGroupId], references: [id], onDelete: SetNull)
+
+  documents          AssetDocument[]
+  approvals          Approval[]
+  customFieldValues  CustomFieldValue[]
 
   @@map("assets")
 }
@@ -221,4 +226,59 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ==================== 自定义设备类型与字段 ====================
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  BOOLEAN
+  LONGTEXT
+}
+
+model CategoryGroup {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique @db.VarChar(50)
+  label     String    @db.VarChar(50)
+  isBuiltin Boolean   @default(false)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  fields  CustomField[]
+  assets  Asset[]
+}
+
+model CustomField {
+  id              String              @id @default(uuid()) @db.Uuid
+  categoryGroupId String              @db.Uuid
+  categoryGroup   CategoryGroup       @relation(fields: [categoryGroupId], references: [id], onDelete: Cascade)
+  name            String              @db.VarChar(50)
+  label           String              @db.VarChar(100)
+  fieldType       FieldType           @default(TEXT)
+  options         String?             @db.Text
+  required        Boolean             @default(false)
+  sortOrder       Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  values  CustomFieldValue[]
+
+  @@unique([categoryGroupId, name])
+}
+
+model CustomFieldValue {
+  id        String      @id @default(uuid()) @db.Uuid
+  assetId   String      @db.Uuid
+  asset     Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  fieldId   String      @db.Uuid
+  field     CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value     String      @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([assetId, fieldId])
 }

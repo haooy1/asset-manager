@@ -78,7 +78,9 @@ export default function AssetDetailPage() {
             <dl className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt className="text-gray-500">品类</dt>
-                <dd className="mt-1 text-gray-900">{CATEGORY_LABELS[asset.category]}</dd>
+                <dd className="mt-1 text-gray-900">
+                  {asset.categoryGroup?.label || CATEGORY_LABELS[asset.category]}
+                </dd>
               </div>
               <div>
                 <dt className="text-gray-500">型号</dt>
@@ -121,6 +123,24 @@ export default function AssetDetailPage() {
               </div>
             </dl>
           </div>
+
+          {asset.customFieldValues && asset.customFieldValues.length > 0 && (
+            <div className="rounded-lg border bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">自定义字段</h2>
+              <dl className="grid grid-cols-2 gap-4 text-sm">
+                {asset.customFieldValues.map((cfv) => (
+                  <div key={cfv.id}>
+                    <dt className="text-gray-500">{cfv.field?.label || cfv.fieldId}</dt>
+                    <dd className="mt-1 text-gray-900">
+                      {cfv.field?.fieldType === "BOOLEAN"
+                        ? (cfv.value === "true" ? "是" : "否")
+                        : cfv.value || "-"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
 
           {asset.category === "SECURITY_DOCUMENT" && asset.documents && asset.documents.length > 0 && (
             <div className="rounded-lg border bg-white p-6 shadow-sm">

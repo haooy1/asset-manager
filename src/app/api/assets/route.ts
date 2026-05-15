@@ -57,8 +57,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const { customFieldValues, categoryGroupId, ...restBody } = body;
+
     const normalizedBody = {
-      ...body,
+      ...restBody,
+      categoryGroupId: categoryGroupId || undefined,
       purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : null,
       warrantyExpiry: body.warrantyExpiry ? new Date(body.warrantyExpiry) : null,
       value: body.value != null && body.value !== "" ? Number(body.value) : undefined,
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
       brand: body.brand || null,
       location: body.location || null,
       description: body.description || null,
+      customFieldValues: customFieldValues || [],
     };
 
     const asset = await createAsset(normalizedBody);
