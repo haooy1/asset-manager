@@ -256,7 +256,6 @@ export function parseExcel(buffer: ArrayBuffer, customFields: CustomFieldDef[]):
 
   if (jsonData.length < 2) return [];
 
-  const headerRow = jsonData[0] as string[];
   const labelToKey: Record<string, string> = {};
   for (const h of FIXED_HEADERS) {
     labelToKey[h.label] = h.key;
@@ -265,8 +264,15 @@ export function parseExcel(buffer: ArrayBuffer, customFields: CustomFieldDef[]):
     labelToKey[cf.label] = `cf_${cf.name}`;
   }
 
+  const firstRowFilled = (jsonData[0] as unknown[]).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
+  const secondRowFilled = (jsonData[1] as unknown[]).filter((v) => v !== null && v !== undefined && String(v).trim() !== "").length;
+  const hasTitleRow = firstRowFilled < secondRowFilled && firstRowFilled <= 2;
+
+  const headerRowIndex = hasTitleRow ? 1 : 0;
+  const headerRow = jsonData[headerRowIndex] as string[];
+
   const rows: ImportRow[] = [];
-  for (let i = 1; i < jsonData.length; i++) {
+  for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
     const values = jsonData[i];
     if (!values || values.every((v) => v === null || v === undefined || v === "")) continue;
 
