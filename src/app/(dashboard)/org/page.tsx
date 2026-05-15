@@ -250,7 +250,7 @@ export default function OrgPage() {
             )}
             <div className="flex gap-2">
               <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">确认</button>
-              <button type="button" onClick={() => setShowForm(false)} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
+              <button type="button" onClick={() => setShowForm(false)} className="rounded-md border px-4 py-2 text-sm">取消</button>
             </div>
           </form>
         </div>

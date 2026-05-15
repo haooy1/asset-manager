@@ -237,10 +237,10 @@ export default function AuditLogsPage() {
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-center gap-2">
               <button disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">上一页</button>
+                className="rounded border px-3 py-1 text-sm disabled:opacity-30">上一页</button>
               <span className="text-sm text-gray-500">{page} / {totalPages}</span>
               <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">下一页</button>
+                className="rounded border px-3 py-1 text-sm disabled:opacity-30">下一页</button>
             </div>
           )}
         </>

@@ -377,7 +377,7 @@ export default function AssetTypesPage() {
                   确认创建
                 </button>
                 <button type="button" onClick={() => setShowAddType(false)}
-                  className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
+                  className="rounded-md border px-4 py-2 text-sm">取消</button>
               </div>
             </form>
           </div>
@@ -438,7 +438,7 @@ export default function AssetTypesPage() {
                 </button>
                 <button type="button"
                   onClick={() => { setShowAddField(false); setShowEditField(null); }}
-                  className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
+                  className="rounded-md border px-4 py-2 text-sm">取消</button>
               </div>
             </form>
           </div>

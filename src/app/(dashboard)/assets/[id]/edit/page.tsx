@@ -449,7 +449,7 @@ export default function EditAssetPage() {
               {saving ? "保存中..." : "保存修改"}
             </button>
             <button type="button" onClick={() => router.back()}
-              className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
+              className="rounded-md border px-4 py-2 text-sm">取消</button>
           </div>
         </form>
       </div>

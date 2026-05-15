@@ -64,7 +64,7 @@ function AssetListContent() {
           <div className="flex gap-2">
             <Link
               href="/assets/import"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               📥 批量导入
             </Link>
@@ -142,7 +142,7 @@ function AssetListContent() {
                     <tr key={asset.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-mono text-xs text-gray-500">{asset.assetNo}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">
-                        <Link href={`/assets/${asset.id}`} className="hover:text-blue-600 transition-colors">
+                        <Link href={`/assets/${asset.id}`} className="hover:text-blue-600">
                           {asset.name}
                         </Link>
                       </td>
@@ -159,7 +159,7 @@ function AssetListContent() {
                       <td className="px-4 py-3">
                         {docCount > 0 ? (
                           <Link href={`/assets/${asset.id}/documents`} title="查看附件文档"
-                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs transition-colors">
+                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs">
                             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
@@ -170,7 +170,7 @@ function AssetListContent() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs transition-colors">
+                        <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs">
                           查看
                         </Link>
                       </td>
@@ -187,7 +187,7 @@ function AssetListContent() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="rounded-md border px-3 py-1 text-sm disabled:opacity-30"
               >
                 上一页
               </button>
@@ -197,7 +197,7 @@ function AssetListContent() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="rounded-md border px-3 py-1 text-sm disabled:opacity-30"
               >
                 下一页
               </button>

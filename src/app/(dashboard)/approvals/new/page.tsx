@@ -110,7 +110,7 @@ function NewApprovalForm() {
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
               {loading ? "提交中..." : "提交申请"}
             </button>
-            <button type="button" onClick={() => router.back()} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
+            <button type="button" onClick={() => router.back()} className="rounded-md border px-4 py-2 text-sm">取消</button>
           </div>
         </form>
       </div>
