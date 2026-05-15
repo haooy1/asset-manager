@@ -1,7 +1,7 @@
 export const APPROVAL_TYPES = ["BORROW", "RETURN", "TRANSFER", "SCRAP"] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
-export const APPROVAL_STATUSES = ["PENDING", "APPROVED", "REJECTED", "EXECUTED"] as const;
+export const APPROVAL_STATUSES = ["PENDING", "APPROVED", "REJECTED", "EXECUTED", "CANCELLED"] as const;
 export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];
 
 export const TYPE_LABELS: Record<ApprovalType, string> = {
@@ -16,6 +16,7 @@ export const STATUS_LABELS: Record<ApprovalStatus, string> = {
   APPROVED: "待执行",
   REJECTED: "已驳回",
   EXECUTED: "已完成",
+  CANCELLED: "已撤销",
 };
 
 export const STATUS_COLORS: Record<ApprovalStatus, string> = {
@@ -23,6 +24,7 @@ export const STATUS_COLORS: Record<ApprovalStatus, string> = {
   APPROVED: "bg-blue-100 text-blue-800",
   REJECTED: "bg-red-100 text-red-800",
   EXECUTED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-gray-100 text-gray-500",
 };
 
 export interface ApprovalInfo {

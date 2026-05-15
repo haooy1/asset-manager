@@ -56,6 +56,52 @@ export async function createApproval(data: {
 }
 
 /**
+ * 申请人撤销自己待审批的领用申请
+ * @param id - 审批单ID
+ * @param applicantId - 申请人ID（用于权限校验）
+ * @throws 审批单不存在、已被处理、非申请人操作时抛出错误
+ */
+export async function cancelApproval(id: string, applicantId: string) {
+  const approval = await db.approval.findUnique({
+    where: { id },
+    include: { asset: { select: { id: true, name: true, status: true } } },
+  });
+
+  if (!approval) throw new Error("审批单不存在");
+  if (approval.applicantId !== applicantId) throw new Error("仅申请人可撤销自己的申请");
+  if (approval.status !== "PENDING") throw new Error("仅待审批状态的申请可撤销");
+
+  const result = await db.approval.update({
+    where: { id },
+    data: {
+      status: "CANCELLED",
+      operatedAt: new Date(),
+    },
+    include: {
+      asset: { select: { id: true, name: true } },
+      applicant: { select: { id: true, realName: true } },
+    },
+  });
+
+  if (approval.type === "BORROW") {
+    await db.asset.update({
+      where: { id: approval.assetId },
+      data: { status: "IDLE" },
+    });
+  }
+
+  writeAuditLog({
+    userId: applicantId,
+    action: "CANCEL_APPROVAL",
+    targetType: "APPROVAL",
+    targetId: id,
+    detail: `撤销${approval.type}审批: ${approval.asset.name}`,
+  }).catch(() => {});
+
+  return result;
+}
+
+/**
  * 查询审批列表（多视角复用）
  * @param view "my"=我的申请 / "pending"=待审批(部门级) / "execute"=待我执行 / "all"=全部
  * @param userId 当前用户ID

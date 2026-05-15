@@ -1,4 +1,4 @@
-import { getApprovalById, reviewApproval, executeApproval } from "@/modules/approvals/services";
+import { getApprovalById, reviewApproval, executeApproval, cancelApproval } from "@/modules/approvals/services";
 import type { ApprovalType } from "@/modules/approvals/types";
 import { requireAuth, requireRole, getCurrentUser } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
@@ -8,9 +8,6 @@ import { NextResponse } from "next/server";
  * - 申请人可查看自己的审批
  * - DEPT_MANAGER/BRANCH_ADMIN 可查看同分支的审批
  * - SUPER_ADMIN 可查看所有审批
- * @param request - HTTP 请求对象
- * @param params - 路由参数，包含审批单 id
- * @returns 审批详情或 403/404 错误
  */
 export async function GET(
   request: Request,
@@ -54,10 +51,7 @@ export async function GET(
 }
 
 /**
- * 处理审批操作（审批通过、审批驳回、执行审批）
- * @param request - Next.js 请求对象，包含操作数据的 JSON 请求体（action, rejectReason）
- * @param params - 路由参数，包含审批单 ID
- * @returns 返回操作结果的 JSON 响应，或 400/401/404/500 错误响应
+ * 处理审批操作（审批通过、审批驳回、执行审批、撤销申请）
  */
 export async function POST(
   request: Request,
@@ -100,6 +94,11 @@ export async function POST(
         assetId: approval.assetId,
         applicantId: approval.applicantId,
       });
+      return NextResponse.json({ data: result });
+    }
+
+    if (action === "cancel") {
+      const result = await cancelApproval(id, user.id);
       return NextResponse.json({ data: result });
     }
 

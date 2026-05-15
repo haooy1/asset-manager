@@ -43,6 +43,27 @@ export default function ApprovalListPage() {
       .finally(() => setLoading(false));
   }, [view, session]);
 
+  const handleCancel = async (approvalId: string) => {
+    if (!confirm("确认撤销该申请？撤销后资产将恢复为可领用状态。")) return;
+    try {
+      const res = await fetch(`/api/approvals/${approvalId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message || "撤销失败");
+        return;
+      }
+      setItems(prev => prev.map(item =>
+        item.id === approvalId ? { ...item, status: "CANCELLED" as ApprovalStatus } : item
+      ));
+    } catch {
+      alert("网络错误，请重试");
+    }
+  };
+
   if (!session) return null;
 
   return (
@@ -112,6 +133,14 @@ export default function ApprovalListPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/approvals/${ap.id}`} className="text-blue-600 hover:underline text-xs">查看</Link>
+                      {view === "my" && ap.status === "PENDING" && (
+                        <button
+                          onClick={() => handleCancel(ap.id)}
+                          className="ml-3 text-red-500 hover:underline text-xs"
+                        >
+                          撤销
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
