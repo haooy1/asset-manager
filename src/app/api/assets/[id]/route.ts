@@ -29,9 +29,9 @@ export async function GET(
     }
 
     if (user?.role === "EMPLOYEE") {
-      if (asset.status !== "IDLE" || !["PC", "PERIPHERAL"].includes(asset.category)) {
+      if (!["IDLE", "BORROWING"].includes(asset.status) || !["PC", "PERIPHERAL"].includes(asset.category)) {
         return NextResponse.json(
-          { error: "FORBIDDEN", message: "您仅可查看闲置的办公电脑和外设配件" },
+          { error: "FORBIDDEN", message: "您仅可查看闲置和领用中的办公电脑及外设配件" },
           { status: 403 },
         );
       }

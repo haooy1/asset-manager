@@ -3,7 +3,7 @@ import { writeAuditLog } from "@/lib/db/audit";
 import type { ApprovalType, ApprovalStatus, ApprovalInfo } from "./types";
 
 /**
- * 创建审批申请
+ * 创建审批申请，BORROW类型自动将资产置为"领用中"
  * @param data.type - 审批类型（BORROW/RETURN/TRANSFER/SCRAP）
  * @param data.assetId - 资产ID
  * @param data.applicantId - 申请人ID
@@ -15,6 +15,13 @@ export async function createApproval(data: {
   applicantId: string;
   reason?: string;
 }) {
+  const asset = await db.asset.findUnique({ where: { id: data.assetId }, select: { status: true, name: true } });
+  if (!asset) throw new Error("资产不存在");
+
+  if (data.type === "BORROW" && asset.status !== "IDLE") {
+    throw new Error(`资产 "${asset.name}" 当前不可领用（状态: ${asset.status}）`);
+  }
+
   const approval = await db.approval.create({
     data: {
       type: data.type,
@@ -28,6 +35,13 @@ export async function createApproval(data: {
       applicant: { select: { id: true, realName: true, username: true } },
     },
   });
+
+  if (data.type === "BORROW") {
+    await db.asset.update({
+      where: { id: data.assetId },
+      data: { status: "BORROWING" },
+    });
+  }
 
   writeAuditLog({
     userId: data.applicantId,
@@ -159,8 +173,8 @@ export async function reviewApproval(
   }
 
   if (decision === "APPROVED" && approval.type === "BORROW") {
-    if (approval.asset.status !== "IDLE") {
-      throw new Error(`资产 "${approval.asset.name}" 当前不可领用（状态: ${approval.asset.status}）`);
+    if (approval.asset.status !== "BORROWING") {
+      throw new Error(`资产 "${approval.asset.name}" 状态异常（当前: ${approval.asset.status}，期望: 领用中）`);
     }
   }
 
@@ -179,6 +193,13 @@ export async function reviewApproval(
       applicant: { select: { id: true, realName: true } },
     },
   });
+
+  if (decision === "REJECTED" && approval.type === "BORROW") {
+    await db.asset.update({
+      where: { id: approval.assetId },
+      data: { status: "IDLE" },
+    });
+  }
 
   writeAuditLog({
     userId: approverId,

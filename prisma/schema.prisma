@@ -71,6 +71,7 @@ model User {
 
 enum AssetStatus {
   IDLE
+  BORROWING
   IN_USE
   MAINTENANCE
   SCRAPPED

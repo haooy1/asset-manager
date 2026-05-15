@@ -1,6 +1,6 @@
 import type { Branch } from "@/modules/org/types";
 
-export const ASSET_STATUS = ["IDLE", "IN_USE", "MAINTENANCE", "SCRAPPED"] as const;
+export const ASSET_STATUS = ["IDLE", "BORROWING", "IN_USE", "MAINTENANCE", "SCRAPPED"] as const;
 export type AssetStatus = (typeof ASSET_STATUS)[number];
 
 export const ASSET_CATEGORIES = [
@@ -11,6 +11,7 @@ export type AssetCategory = (typeof ASSET_CATEGORIES)[number];
 
 export const STATUS_LABELS: Record<AssetStatus, string> = {
   IDLE: "闲置",
+  BORROWING: "领用中",
   IN_USE: "使用中",
   MAINTENANCE: "维保中",
   SCRAPPED: "已报废",
@@ -30,6 +31,7 @@ export const CATEGORY_LABELS: Record<AssetCategory, string> = {
 
 export const STATUS_COLORS: Record<AssetStatus, string> = {
   IDLE: "bg-green-100 text-green-800",
+  BORROWING: "bg-orange-100 text-orange-800",
   IN_USE: "bg-blue-100 text-blue-800",
   MAINTENANCE: "bg-yellow-100 text-yellow-800",
   SCRAPPED: "bg-gray-100 text-gray-800",
@@ -101,7 +103,8 @@ export type UpdateAssetInput = Partial<CreateAssetInput> & {
 };
 
 export const STATUS_TRANSITIONS: Record<AssetStatus, AssetStatus[]> = {
-  IDLE: ["IN_USE", "MAINTENANCE", "SCRAPPED"],
+  IDLE: ["BORROWING", "IN_USE", "MAINTENANCE", "SCRAPPED"],
+  BORROWING: ["IN_USE", "IDLE"],
   IN_USE: ["IDLE", "MAINTENANCE", "SCRAPPED"],
   MAINTENANCE: ["IDLE", "IN_USE", "SCRAPPED"],
   SCRAPPED: [],

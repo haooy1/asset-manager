@@ -27,7 +27,7 @@ export async function getAssetList(params: AssetQueryParams) {
   const where: Record<string, unknown> = {};
 
   if (userRole === "EMPLOYEE") {
-    where.status = "IDLE";
+    where.status = { in: ["IDLE", "BORROWING"] };
     where.category = { in: ["PC", "PERIPHERAL"] };
   } else {
     if (status) where.status = status;
