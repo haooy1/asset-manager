@@ -310,7 +310,7 @@ export default function NewAssetPage() {
               <label className="block text-sm font-medium text-gray-700">品类 *</label>
               <select name="category" required value={form.category} onChange={handleChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                {ASSET_CATEGORIES.filter(c => c !== "SECURITY_DOCUMENT").map((c) => (
+                {ASSET_CATEGORIES.map((c) => (
                   <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
                 ))}
               </select>
