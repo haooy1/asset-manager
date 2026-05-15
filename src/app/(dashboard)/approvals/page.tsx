@@ -131,15 +131,18 @@ export default function ApprovalListPage() {
                     <td className="px-4 py-3 text-xs text-gray-500">
                       {new Date(ap.createdAt).toLocaleString("zh-CN")}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <Link href={`/approvals/${ap.id}`} className="text-blue-600 hover:underline text-xs">查看</Link>
                       {view === "my" && ap.status === "PENDING" && (
-                        <button
-                          onClick={() => handleCancel(ap.id)}
-                          className="ml-3 text-red-500 hover:underline text-xs"
-                        >
-                          撤销
-                        </button>
+                        <>
+                          <span className="mx-2 text-gray-300">|</span>
+                          <button
+                            onClick={() => handleCancel(ap.id)}
+                            className="text-red-500 hover:underline text-xs"
+                          >
+                            撤销
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
