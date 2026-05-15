@@ -12,6 +12,7 @@ export default function AssetDetailPage() {
   const id = params.id as string;
 
   const [asset, setAsset] = useState<AssetInfo & { documents?: { id: string; name: string; fileName: string; filePath: string; expiryDate: string | null; uploadedAt: string }[]; approvals?: { id: string; type: string; status: string; applicant: { id: string; realName: string } | null; approver: { id: string; realName: string } | null; createdAt: string }[] } | null>(null);
+  const [sharedDocs, setSharedDocs] = useState<{ id: string; name: string; fileName: string; filePath: string; expiryDate: null; uploadedAt: string; shared: true }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isEmployee = session?.user?.role === "EMPLOYEE";
@@ -33,6 +34,18 @@ export default function AssetDetailPage() {
       } else {
         const result = await res.json();
         setAsset(result.data);
+
+        if (result.data?.categoryGroupId) {
+          try {
+            const sharedRes = await fetch(`/api/category-groups/${result.data.categoryGroupId}/documents`);
+            if (sharedRes.ok) {
+              const sharedData = await sharedRes.json();
+              setSharedDocs((sharedData.data || []).map((d: { id: string; name: string; fileName: string; filePath: string; uploadedAt: string }) => ({
+                ...d, expiryDate: null, shared: true as const,
+              })));
+            }
+          } catch {}
+        }
       }
     } catch {
       // ignore
@@ -150,13 +163,13 @@ export default function AssetDetailPage() {
             </div>
           )}
 
-          {asset.documents && asset.documents.length > 0 && (
+          {(asset.documents && asset.documents.length > 0) || sharedDocs.length > 0 ? (
             <div className="rounded-lg border bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
                 {asset.category === "SECURITY_DOCUMENT" ? "报告文件" : "附件文档"}
               </h2>
               <ul className="divide-y text-sm">
-                {asset.documents.map((doc) => (
+                {asset.documents?.map((doc) => (
                   <li key={doc.id} className="flex items-center justify-between py-2">
                     <div>
                       <span className="font-medium text-gray-900">{doc.name}</span>
@@ -174,9 +187,23 @@ export default function AssetDetailPage() {
                     </div>
                   </li>
                 ))}
+                {sharedDocs.map((doc) => (
+                  <li key={doc.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <span className="font-medium text-gray-900">{doc.name}</span>
+                      <span className="ml-2 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">共享</span>
+                      <span className="ml-1 text-xs text-gray-500">{doc.fileName}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a href={doc.filePath} target="_blank" className="text-blue-600 hover:underline text-xs" rel="noreferrer">
+                        下载
+                      </a>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-6">
@@ -189,6 +216,14 @@ export default function AssetDetailPage() {
                   className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                 >
                   编辑信息
+                </button>
+              )}
+              {asset.categoryGroupId && (
+                <button
+                  onClick={() => router.push(`/category-groups/${asset.categoryGroupId}/documents`)}
+                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  📖 管理共享手册
                 </button>
               )}
               {asset.status === "IDLE" && (

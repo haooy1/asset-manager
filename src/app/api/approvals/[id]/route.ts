@@ -28,7 +28,7 @@ export async function GET(
 
     if (user.role !== "SUPER_ADMIN") {
       const isApplicant = approval.applicantId === user.id;
-      const isSameBranch = user.branchId && approval.asset?.branchId === user.branchId;
+      const isSameBranch = user.branchId && approval.asset?.branch?.id === user.branchId;
       const hasManagementRole = user.role === "BRANCH_ADMIN" || user.role === "DEPT_MANAGER";
 
       if (!isApplicant && !(isSameBranch && hasManagementRole)) {

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 interface DocumentInfo {
   id: string;
-  assetId: string;
+  assetId?: string;
   name: string;
   fileName: string;
   filePath: string;
@@ -14,11 +14,22 @@ interface DocumentInfo {
   fileSize: number | null;
   expiryDate: string | null;
   uploadedAt: string;
+  shared?: boolean;
+  uploader?: { realName: string } | null;
 }
 
-/**
- * 根据文件扩展名返回图标颜色和类型标签
- */
+interface CategoryDocInfo {
+  id: string;
+  categoryGroupId: string;
+  name: string;
+  fileName: string;
+  filePath: string;
+  fileType: string | null;
+  fileSize: number | null;
+  uploadedAt: string;
+  uploader: { realName: string } | null;
+}
+
 function getFileIcon(fileName: string) {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   const map: Record<string, { color: string; label: string; bg: string }> = {
@@ -44,9 +55,6 @@ function getFileIcon(fileName: string) {
   return map[ext] ?? { color: "text-gray-500", label: ext.toUpperCase() || "FILE", bg: "bg-gray-50" };
 }
 
-/**
- * 格式化文件大小
- */
 function formatSize(bytes: number | null): string {
   if (bytes == null) return "-";
   if (bytes < 1024) return `${bytes} B`;
@@ -59,13 +67,11 @@ export default function AssetDocumentsPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [asset, setAsset] = useState<{ assetNo: string; name: string } | null>(null);
+  const [asset, setAsset] = useState<{ assetNo: string; name: string; categoryGroupId: string | null; categoryGroup: { id: string; label: string } | null } | null>(null);
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
+  const [sharedDocs, setSharedDocs] = useState<DocumentInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * 加载资产及其文档
-   */
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -73,16 +79,43 @@ export default function AssetDocumentsPage() {
       if (!res.ok) return;
       const { data } = await res.json();
       if (data) {
-        setAsset({ assetNo: data.assetNo, name: data.name });
+        setAsset({
+          assetNo: data.assetNo,
+          name: data.name,
+          categoryGroupId: data.categoryGroupId,
+          categoryGroup: data.categoryGroup,
+        });
         setDocuments(data.documents || []);
+
+        if (data.categoryGroupId) {
+          try {
+            const sharedRes = await fetch(`/api/category-groups/${data.categoryGroupId}/documents`);
+            if (sharedRes.ok) {
+              const sharedData = await sharedRes.json();
+              const mapped = (sharedData.data || []).map((d: CategoryDocInfo) => ({
+                id: d.id,
+                name: d.name,
+                fileName: d.fileName,
+                filePath: d.filePath,
+                fileType: d.fileType,
+                fileSize: d.fileSize,
+                expiryDate: null,
+                uploadedAt: d.uploadedAt,
+                shared: true,
+                uploader: d.uploader,
+              }));
+              setSharedDocs(mapped);
+            }
+          } catch {}
+        }
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
     setLoading(false);
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const allDocs = [...documents, ...sharedDocs];
 
   if (loading) {
     return (
@@ -104,12 +137,12 @@ export default function AssetDocumentsPage() {
             <Link href={`/assets/${id}`} className="hover:text-blue-600">{asset.assetNo}</Link>
             <span className="mx-1">·</span>
             <span>{asset.name}</span>
-            <span className="ml-2 text-xs text-gray-400">共 {documents.length} 个文件</span>
+            <span className="ml-2 text-xs text-gray-400">共 {allDocs.length} 个文件</span>
           </p>
         )}
       </div>
 
-      {documents.length === 0 ? (
+      {allDocs.length === 0 ? (
         <div className="rounded-lg border bg-white py-16 text-center shadow-sm">
           <svg className="mx-auto mb-3 h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -118,7 +151,7 @@ export default function AssetDocumentsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {documents.map((doc) => {
+          {allDocs.map((doc) => {
             const icon = getFileIcon(doc.fileName);
             return (
               <div key={doc.id} className="group rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-md">
@@ -127,9 +160,16 @@ export default function AssetDocumentsPage() {
                     <span className={`text-xs font-bold ${icon.color}`}>{icon.label}</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-medium text-gray-900" title={doc.name}>
-                      {doc.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate text-sm font-medium text-gray-900" title={doc.name}>
+                        {doc.name}
+                      </h3>
+                      {doc.shared && (
+                        <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                          共享
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-0.5 truncate text-xs text-gray-400" title={doc.fileName}>
                       {doc.fileName}
                     </p>
@@ -140,6 +180,12 @@ export default function AssetDocumentsPage() {
                   <span>{formatSize(doc.fileSize)}</span>
                   <span>·</span>
                   <span>{new Date(doc.uploadedAt).toLocaleDateString("zh-CN")}</span>
+                  {doc.shared && doc.uploader && (
+                    <>
+                      <span>·</span>
+                      <span>{doc.uploader.realName} 上传</span>
+                    </>
+                  )}
                   {doc.expiryDate && (
                     <>
                       <span>·</span>
