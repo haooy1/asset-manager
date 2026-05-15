@@ -1,11 +1,13 @@
-import { importAssets, parseCSV, getCSVTemplate } from "@/modules/assets/import";
+import { importAssets, parseCSV, parseExcel, isExcelFile } from "@/modules/assets/import";
 import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
 import { writeAuditLog } from "@/lib/db/audit";
 import { db } from "@/lib/db/client";
 import { NextResponse } from "next/server";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 /**
- * 通过 CSV 文件批量导入资产（支持自定义字段）
+ * 通过 CSV/Excel 文件批量导入资产（支持自定义字段）
  * @param request - Next.js 请求对象，包含 FormData（file, categoryGroupId）
  * @returns 返回导入结果的 JSON 响应
  */
@@ -22,7 +24,12 @@ export async function POST(request: Request) {
     const categoryGroupId = (formData.get("categoryGroupId") as string) || undefined;
 
     if (!file) {
-      return NextResponse.json({ error: "VALIDATION_ERROR", message: "请上传CSV文件" }, { status: 400 });
+      return NextResponse.json({ error: "VALIDATION_ERROR", message: "请上传CSV或Excel文件" }, { status: 400 });
+    }
+
+    const filename = file.name.toLowerCase();
+    if (!filename.endsWith(".csv") && !filename.endsWith(".xlsx") && !filename.endsWith(".xls")) {
+      return NextResponse.json({ error: "VALIDATION_ERROR", message: "仅支持 CSV、XLSX、XLS 格式文件" }, { status: 400 });
     }
 
     let customFields: { id: string; name: string; label: string; fieldType: string; options: string | null; required: boolean }[] = [];
@@ -33,11 +40,17 @@ export async function POST(request: Request) {
       });
     }
 
-    const content = await file.text();
-    const rows = parseCSV(content, customFields);
+    let rows;
+    if (isExcelFile(filename)) {
+      const buffer = await file.arrayBuffer();
+      rows = parseExcel(buffer, customFields);
+    } else {
+      const content = await file.text();
+      rows = parseCSV(content, customFields);
+    }
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "VALIDATION_ERROR", message: "CSV文件中无有效数据行" }, { status: 400 });
+      return NextResponse.json({ error: "VALIDATION_ERROR", message: "文件中无有效数据行" }, { status: 400 });
     }
 
     if (rows.length > 1000) {
@@ -62,23 +75,21 @@ export async function POST(request: Request) {
 }
 
 /**
- * 获取 CSV 导入模板文件，支持按设备类型动态生成自定义字段列
- * @param request - HTTP 请求对象，可选 query 参数 categoryGroupId
- * @returns 返回 CSV 模板文件的下载响应
+ * 获取 Excel 导入模板文件（带品类下拉框）
+ * @returns 返回 Excel 模板文件的下载响应
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const authError = await requireAuth();
     if (authError) return authError;
 
-    const { searchParams } = new URL(request.url);
-    const categoryGroupId = searchParams.get("categoryGroupId") || undefined;
+    const templatePath = join(process.cwd(), "public", "templates", "asset-import-template.xlsx");
+    const fileBuffer = readFileSync(templatePath);
 
-    const template = await getCSVTemplate(categoryGroupId);
-    return new Response(template, {
+    return new Response(fileBuffer, {
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": "attachment; filename=import-template.csv",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": "attachment; filename=asset-import-template.xlsx",
       },
     });
   } catch (error) {

@@ -71,7 +71,15 @@ export default function ImportPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">批量导入资产</h1>
+      <div className="mb-6 flex items-center gap-4">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+        >
+          ← 返回
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">批量导入资产</h1>
+      </div>
 
       <div className="space-y-6">
         <div className="rounded-lg border bg-white p-6 shadow-sm">
@@ -101,17 +109,16 @@ export default function ImportPage() {
         <div className="rounded-lg border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">第二步：下载模板并填写</h2>
           <ol className="ml-5 list-decimal space-y-2 text-sm text-gray-600">
-            <li>下载 CSV 模板，按模板格式填写设备信息</li>
+            <li>下载 Excel 模板，按模板格式填写设备信息</li>
             <li>必填字段：资产编号、资产名称</li>
             <li>可选字段：品类、型号、品牌、购置日期、维保截止日、存放位置、设备价值、备注</li>
-            <li>品类可选值：PC / PERIPHERAL / NETWORK / SERVER_STORAGE / MOBILE / MEETING / SECURITY_DEVICE / SECURITY_DOCUMENT / CUSTOM</li>
+            <li><span className="font-medium text-blue-600">品类列有下拉框，请从列表中选择</span></li>
             <li>日期格式：YYYY-MM-DD（如 2026-01-15）</li>
-            <li>编码建议使用 UTF-8 with BOM（Excel 默认格式）</li>
             <li>单次最多导入 1000 行</li>
           </ol>
           <button onClick={handleDownloadTemplate}
             className="mt-4 rounded-md border border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
-            📥 下载 CSV 模板
+            📥 下载 Excel 模板
           </button>
         </div>
 
@@ -125,8 +132,8 @@ export default function ImportPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             )}
-            <span>{loading ? "导入中..." : "点击选择 CSV 文件上传"}</span>
-            <input type="file" accept=".csv" className="hidden" onChange={handleUpload} disabled={loading} />
+            <span>{loading ? "导入中..." : "点击选择 Excel 或 CSV 文件上传"}</span>
+            <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleUpload} disabled={loading} />
           </label>
 
           {error && <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}

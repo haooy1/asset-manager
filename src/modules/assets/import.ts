@@ -1,5 +1,6 @@
 import { db } from "@/lib/db/client";
 import type { AssetCategory } from "@/modules/assets/types";
+import * as XLSX from "xlsx";
 
 interface ImportRow {
   assetNo: string;
@@ -51,6 +52,43 @@ const FIXED_HEADERS = [
 
 const VALID_CATEGORIES = ["PC", "PERIPHERAL", "NETWORK", "SERVER_STORAGE", "MOBILE", "MEETING", "SECURITY_DEVICE", "SECURITY_DOCUMENT", "CUSTOM"];
 
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  "PC": "PC",
+  "台式机": "PC",
+  "笔记本": "PC",
+  "电脑": "PC",
+  "PERIPHERAL": "PERIPHERAL",
+  "外设": "PERIPHERAL",
+  "NETWORK": "NETWORK",
+  "网络设备": "NETWORK",
+  "SERVER_STORAGE": "SERVER_STORAGE",
+  "服务器": "SERVER_STORAGE",
+  "存储": "SERVER_STORAGE",
+  "MOBILE": "MOBILE",
+  "移动设备": "MOBILE",
+  "手机": "MOBILE",
+  "平板": "MOBILE",
+  "MEETING": "MEETING",
+  "会议设备": "MEETING",
+  "SECURITY_DEVICE": "SECURITY_DEVICE",
+  "安防设备": "SECURITY_DEVICE",
+  "SECURITY_DOCUMENT": "SECURITY_DOCUMENT",
+  "安全文档": "SECURITY_DOCUMENT",
+  "CUSTOM": "CUSTOM",
+  "自定义": "CUSTOM",
+};
+
+function normalizeCategory(input: string): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (VALID_CATEGORIES.includes(trimmed)) return trimmed;
+  const mapped = CATEGORY_LABEL_MAP[trimmed];
+  if (mapped) return mapped;
+  const upper = trimmed.toUpperCase();
+  if (VALID_CATEGORIES.includes(upper)) return upper;
+  return null;
+}
+
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = "";
@@ -75,8 +113,8 @@ function validateRow(row: ImportRow, lineNumber: number, customFields: CustomFie
   if (row.assetNo.length > 50) return `第 ${lineNumber} 行: 资产编号超过50字符`;
   if (!row.name || row.name.trim() === "") return `第 ${lineNumber} 行: 资产名称为必填项`;
   if (row.name.length > 200) return `第 ${lineNumber} 行: 资产名称超过200字符`;
-  if (row.category && !VALID_CATEGORIES.includes(row.category)) {
-    return `第 ${lineNumber} 行: 无效的品类 "${row.category}"`;
+  if (row.category && !normalizeCategory(row.category)) {
+    return `第 ${lineNumber} 行: 无效的品类 "${row.category}"，可选值：PC/台式机/笔记本、PERIPHERAL/外设、NETWORK/网络设备、SERVER_STORAGE/服务器/存储、MOBILE/移动设备/手机/平板、MEETING/会议设备、SECURITY_DEVICE/安防设备、SECURITY_DOCUMENT/安全文档、CUSTOM/自定义`;
   }
   if (row.purchaseDate && isNaN(Date.parse(row.purchaseDate))) return `第 ${lineNumber} 行: 购置日期格式无效`;
   if (row.warrantyExpiry && isNaN(Date.parse(row.warrantyExpiry))) return `第 ${lineNumber} 行: 维保截止日格式无效`;
@@ -143,7 +181,21 @@ export async function getCSVTemplate(categoryGroupId?: string): Promise<string> 
     }
   }
 
-  const csvContent = headers.join(",") + "\n" + exampleRow.join(",") + "\n";
+  const categoryOptions = [
+    "# 品类可选值（支持中文或英文代码）：",
+    "# PC / 台式机 / 笔记本 / 电脑",
+    "# PERIPHERAL / 外设",
+    "# NETWORK / 网络设备",
+    "# SERVER_STORAGE / 服务器 / 存储",
+    "# MOBILE / 移动设备 / 手机 / 平板",
+    "# MEETING / 会议设备",
+    "# SECURITY_DEVICE / 安防设备",
+    "# SECURITY_DOCUMENT / 安全文档",
+    "# CUSTOM / 自定义",
+    "",
+  ];
+
+  const csvContent = headers.join(",") + "\n" + exampleRow.join(",") + "\n" + categoryOptions.join("\n");
   return "\uFEFF" + csvContent;
 }
 
@@ -181,6 +233,57 @@ export function parseCSV(csvContent: string, customFields: CustomFieldDef[]): Im
   }
 
   return rows;
+}
+
+/**
+ * 解析 Excel 文件内容，返回结构化行数据
+ * @param buffer - Excel 文件的 ArrayBuffer
+ * @param customFields - 自定义字段定义列表
+ * @returns 解析后的行数据数组
+ */
+export function parseExcel(buffer: ArrayBuffer, customFields: CustomFieldDef[]): ImportRow[] {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) return [];
+
+  const sheet = workbook.Sheets[sheetName];
+  const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as (string | number | boolean | null | undefined)[][];
+
+  if (jsonData.length < 2) return [];
+
+  const headerRow = jsonData[0] as string[];
+  const labelToKey: Record<string, string> = {};
+  for (const h of FIXED_HEADERS) {
+    labelToKey[h.label] = h.key;
+  }
+  for (const cf of customFields) {
+    labelToKey[cf.label] = `cf_${cf.name}`;
+  }
+
+  const rows: ImportRow[] = [];
+  for (let i = 1; i < jsonData.length; i++) {
+    const values = jsonData[i];
+    if (!values || values.every((v) => v === null || v === undefined || v === "")) continue;
+
+    const row: Record<string, string> = {};
+    headerRow.forEach((h, idx) => {
+      const key = labelToKey[h] ?? h;
+      const val = values[idx];
+      row[key] = val !== null && val !== undefined ? String(val).trim() : "";
+    });
+    rows.push(row as ImportRow);
+  }
+
+  return rows;
+}
+
+/**
+ * 判断文件是否为 Excel 格式
+ * @param filename - 文件名
+ * @returns 是否为 Excel 文件
+ */
+export function isExcelFile(filename: string): boolean {
+  return filename.endsWith(".xlsx") || filename.endsWith(".xls");
 }
 
 /**
@@ -226,7 +329,7 @@ export async function importAssets(
       const data: Record<string, unknown> = {
         assetNo: row.assetNo,
         name: row.name,
-        category: (row.category || "PC") as AssetCategory,
+        category: normalizeCategory(row.category || "") || "PC" as AssetCategory,
         model: row.model || null,
         brand: row.brand || null,
         purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
