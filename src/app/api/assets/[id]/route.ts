@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 /**
  * 获取指定资产的详细信息
- * 普通员工（EMPLOYEE）只能查看分配给自己的资产
+ * 普通员工（EMPLOYEE）仅可查看闲置状态的办公电脑和外设配件
  * @param _request - Next.js 请求对象（未使用）
  * @param params - 路由参数，包含资产 ID
  * @returns 返回资产详情的 JSON 响应，或 403/404/500 错误响应
@@ -28,11 +28,13 @@ export async function GET(
       return NextResponse.json({ error: "NOT_FOUND", message: "资产不存在" }, { status: 404 });
     }
 
-    if (user?.role === "EMPLOYEE" && asset.assignedUserId !== user.id) {
-      return NextResponse.json(
-        { error: "FORBIDDEN", message: "您无权查看此资产" },
-        { status: 403 },
-      );
+    if (user?.role === "EMPLOYEE") {
+      if (asset.status !== "IDLE" || !["PC", "PERIPHERAL"].includes(asset.category)) {
+        return NextResponse.json(
+          { error: "FORBIDDEN", message: "您仅可查看闲置的办公电脑和外设配件" },
+          { status: 403 },
+        );
+      }
     }
 
     return NextResponse.json({ data: asset });

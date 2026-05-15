@@ -19,20 +19,22 @@ export interface AssetQueryParams {
 
 /**
  * 分页查询资产列表，支持按分支/状态/品类/关键词筛选
- * 普通员工（EMPLOYEE）自动限制为仅查看已分配给自己的资产
+ * 普通员工（EMPLOYEE）仅可查看闲置状态的办公电脑和外设配件
  */
 export async function getAssetList(params: AssetQueryParams) {
-  const { branchId, status, category, keyword, page = 1, pageSize = 20, userRole, userId } = params;
+  const { branchId, status, category, keyword, page = 1, pageSize = 20, userRole } = params;
 
   const where: Record<string, unknown> = {};
 
-  if (userRole === "EMPLOYEE" && userId) {
-    where.assignedUserId = userId;
+  if (userRole === "EMPLOYEE") {
+    where.status = "IDLE";
+    where.category = { in: ["PC", "PERIPHERAL"] };
+  } else {
+    if (status) where.status = status;
+    if (category) where.category = category;
   }
 
   if (branchId) where.branchId = branchId;
-  if (status) where.status = status;
-  if (category) where.category = category;
   if (keyword) {
     where.OR = [
       { name: { contains: keyword, mode: "insensitive" } },

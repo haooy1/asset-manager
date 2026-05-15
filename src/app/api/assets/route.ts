@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 /**
  * 获取资产列表，支持按分支/状态/品类/关键词筛选
- * 普通员工仅能看到已分配给自己的资产
+ * 普通员工仅可查看闲置状态的办公电脑和外设配件
  * @param request - HTTP 请求对象
  * @returns 资产列表分页结果
  */
@@ -24,7 +24,6 @@ export async function GET(request: Request) {
       page: Number(searchParams.get("page")) || 1,
       pageSize: Number(searchParams.get("pageSize")) || 20,
       userRole: user?.role ?? undefined,
-      userId: user?.id ?? undefined,
     };
     const result = await getAssetList(params);
     return NextResponse.json(result);
