@@ -54,6 +54,16 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    label: "操作日志",
+    href: "/audit-logs",
+    adminOnly: true,
+    icon: (
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+  },
 ];
 
 const MOBILE_NAV = [
@@ -98,7 +108,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
+          {NAV_ITEMS.filter(item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}

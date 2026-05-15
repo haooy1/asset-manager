@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db/client";
+import { writeAuditLog } from "@/lib/db/audit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -20,6 +21,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.isActive) {
+          if (credentials.username) {
+            writeAuditLog({
+              userId: user?.id,
+              username: credentials.username as string,
+              action: "LOGIN_FAILED",
+              targetType: "SYSTEM",
+              detail: `登录失败: 用户不存在或已禁用 (${credentials.username})`,
+            }).catch(() => {});
+          }
           return null;
         }
 
@@ -29,6 +39,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
 
         if (!isValid) {
+          writeAuditLog({
+            userId: user.id,
+            username: user.username,
+            action: "LOGIN_FAILED",
+            targetType: "SYSTEM",
+            detail: `登录失败: 密码错误 (${user.username})`,
+          }).catch(() => {});
           return null;
         }
 
@@ -65,6 +82,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/login",
+  },
+  events: {
+    async signIn({ user }) {
+      writeAuditLog({
+        userId: user.id,
+        username: user.username as string,
+        action: "LOGIN",
+        targetType: "SYSTEM",
+        detail: `${user.name || user.username} 登录系统`,
+      }).catch(() => {});
+    },
+    async signOut({ token }) {
+      if (token?.id) {
+        writeAuditLog({
+          userId: token.id as string,
+          username: token.username as string,
+          action: "LOGOUT",
+          targetType: "SYSTEM",
+          detail: `${token.name || token.username} 登出系统`,
+        }).catch(() => {});
+      }
+    },
   },
   session: {
     strategy: "jwt",

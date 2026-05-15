@@ -1,5 +1,6 @@
 import { getAssetList, createAsset } from "@/modules/assets/services";
 import { requireAuth, requireRole, getCurrentUser } from "@/lib/auth/middleware";
+import { writeAuditLog } from "@/lib/db/audit";
 import { NextResponse } from "next/server";
 
 /**
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
     const authError = await requireRole("SUPER_ADMIN", "BRANCH_ADMIN", "DEPT_MANAGER");
     if (authError) return authError;
 
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+
     const body = await request.json();
     const { assetNo, name, category } = body;
 
@@ -72,6 +76,14 @@ export async function POST(request: Request) {
     };
 
     const asset = await createAsset(normalizedBody);
+    writeAuditLog({
+      userId: user.id,
+      username: user.username,
+      action: "CREATE_ASSET",
+      targetType: "ASSET",
+      targetId: asset.id,
+      detail: `新增资产: ${asset.name} (${asset.assetNo})`,
+    }).catch(() => {});
     return NextResponse.json({ data: asset }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {

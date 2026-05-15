@@ -1,7 +1,13 @@
 import { db } from "@/lib/db/client";
 
-type AuditAction = "LOGIN" | "LOGOUT" | "CREATE_ASSET" | "UPDATE_ASSET" | "DELETE_ASSET" | "CREATE_APPROVAL" | "APPROVE" | "REJECT" | "EXECUTE" | "CREATE_USER" | "UPDATE_USER" | "CREATE_BRANCH" | "IMPORT_ASSETS";
-type AuditTargetType = "ASSET" | "APPROVAL" | "USER" | "BRANCH";
+type AuditAction = "LOGIN" | "LOGOUT" | "LOGIN_FAILED"
+  | "CREATE_ASSET" | "UPDATE_ASSET" | "DELETE_ASSET"
+  | "CREATE_APPROVAL" | "CANCEL_APPROVAL" | "APPROVE" | "REJECT" | "EXECUTE"
+  | "CREATE_USER" | "UPDATE_USER"
+  | "CREATE_BRANCH" | "UPDATE_BRANCH" | "DELETE_BRANCH"
+  | "CREATE_DEPT" | "UPDATE_DEPT" | "DELETE_DEPT"
+  | "UPDATE_CATEGORY_GROUP" | "IMPORT_ASSETS";
+type AuditTargetType = "ASSET" | "APPROVAL" | "USER" | "BRANCH" | "DEPT" | "CATEGORY_GROUP" | "SYSTEM";
 
 /**
  * 写入审计日志
@@ -46,5 +52,17 @@ export async function getAuditLogs(params: {
       take: pageSize,
     }),
   ]);
-  return { total, page, pageSize, items };
+
+  const logsWithUser = await Promise.all(items.map(async (log) => {
+    let user = null;
+    if (log.userId) {
+      user = await db.user.findUnique({
+        where: { id: log.userId },
+        select: { id: true, realName: true, username: true },
+      });
+    }
+    return { ...log, user };
+  }));
+
+  return { total, page, pageSize, items: logsWithUser };
 }
