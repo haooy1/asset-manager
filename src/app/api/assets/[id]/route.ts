@@ -131,9 +131,13 @@ export async function POST(
     }
 
     const doc = await uploadDocument(id, name, file, expiryDate);
+    console.log(`[upload] 文档上传成功: assetId=${id} docId=${doc.id} name=${name}`);
     return NextResponse.json({ data: doc }, { status: 201 });
   } catch (error) {
-    console.error("上传文档失败:", error);
-    return NextResponse.json({ error: "INTERNAL_ERROR", message: "服务器内部错误" }, { status: 500 });
+    console.error("[upload] 上传文档失败:", error);
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: `上传失败: ${error instanceof Error ? error.message : "未知错误"}` },
+      { status: 500 },
+    );
   }
 }

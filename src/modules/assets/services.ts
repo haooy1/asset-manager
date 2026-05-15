@@ -184,17 +184,20 @@ export async function uploadDocument(
   const filePath = path.join(uploadDir, fileName);
   await writeFile(filePath, buffer);
 
-  return db.assetDocument.create({
+  const relativePath = `/uploads/${assetId}/${fileName}`;
+  const doc = await db.assetDocument.create({
     data: {
       assetId,
       name,
       fileName: file.name,
-      filePath: `/uploads/${assetId}/${fileName}`,
+      filePath: relativePath,
       fileType: file.type,
       fileSize: file.size,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
     },
   });
+  console.log(`[uploadDocument] DB记录已创建: ${doc.id} path=${relativePath}`);
+  return doc;
 }
 
 /**

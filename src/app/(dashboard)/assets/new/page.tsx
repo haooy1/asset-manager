@@ -22,7 +22,7 @@ export default function NewAssetPage() {
     description: "",
   });
 
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadFileName, setUploadFileName] = useState("");
 
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroupInfo[]>([]);
@@ -135,21 +135,24 @@ export default function NewAssetPage() {
       const result = await res.json();
       const assetId = result.data.id;
 
-      if (uploadFile) {
-        const formData = new FormData();
-        formData.append("file", uploadFile);
-        formData.append("name", uploadFileName || form.name);
-        if (form.warrantyExpiry) {
-          formData.append("expiryDate", form.warrantyExpiry);
-        }
+      if (uploadFiles.length > 0) {
+        for (const file of uploadFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("name", uploadFileName || file.name);
+          if (form.warrantyExpiry) {
+            formData.append("expiryDate", form.warrantyExpiry);
+          }
 
-        const uploadRes = await fetch(`/api/assets/${assetId}`, {
-          method: "POST",
-          body: formData,
-        });
+          const uploadRes = await fetch(`/api/assets/${assetId}`, {
+            method: "POST",
+            body: formData,
+          });
 
-        if (!uploadRes.ok) {
-          console.error("文件上传失败，但资产已创建");
+          if (!uploadRes.ok) {
+            const errText = await uploadRes.text();
+            console.error(`文件 ${file.name} 上传失败:`, errText);
+          }
         }
       }
 
@@ -196,24 +199,34 @@ export default function NewAssetPage() {
             </div>
 
             <div className="rounded-md border border-green-200 bg-green-50/30 p-4">
-              <h3 className="mb-3 text-sm font-medium text-green-800">上传报告文件</h3>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <h3 className="mb-3 text-sm font-medium text-green-800">上传报告文件（支持多文件）</h3>
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">文件名称</label>
+                  <label className="block text-sm font-medium text-gray-700">文件名称前缀</label>
                   <input value={uploadFileName}
                     onChange={e => setUploadFileName(e.target.value)}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                    placeholder={form.name || "如 渗透测试报告.pdf"} />
+                    placeholder={form.name || "留空则使用原始文件名"} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">选择文件</label>
-                  <input type="file"
-                    onChange={e => setUploadFile(e.target.files?.[0] || null)}
+                  <input type="file" multiple
+                    onChange={e => setUploadFiles(Array.from(e.target.files || []))}
                     className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100" />
-                  {uploadFile && (
-                    <p className="mt-1 text-xs text-gray-500">已选择: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)</p>
-                  )}
                 </div>
+                {uploadFiles.length > 0 && (
+                  <div className="rounded border bg-white p-3">
+                    <p className="mb-2 text-xs font-medium text-gray-600">已选择 {uploadFiles.length} 个文件：</p>
+                    <ul className="space-y-1">
+                      {uploadFiles.map((f, i) => (
+                        <li key={i} className="flex items-center justify-between text-xs text-gray-700">
+                          <span className="truncate max-w-[300px]">{f.name}</span>
+                          <span className="text-gray-400 ml-2 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
 
