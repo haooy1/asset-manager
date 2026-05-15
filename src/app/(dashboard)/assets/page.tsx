@@ -61,12 +61,20 @@ function AssetListContent() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">资产列表</h1>
         {!isEmployee && (
-          <Link
-            href="/assets/new"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + 新增资产
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/assets/import"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              📥 批量导入
+            </Link>
+            <Link
+              href="/assets/new"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + 新增资产
+            </Link>
+          </div>
         )}
       </div>
 

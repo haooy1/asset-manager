@@ -6,7 +6,7 @@ type AuditAction = "LOGIN" | "LOGOUT" | "LOGIN_FAILED"
   | "CREATE_USER" | "UPDATE_USER"
   | "CREATE_BRANCH" | "UPDATE_BRANCH" | "DELETE_BRANCH"
   | "CREATE_DEPT" | "UPDATE_DEPT" | "DELETE_DEPT"
-  | "UPDATE_CATEGORY_GROUP" | "IMPORT_ASSETS";
+  | "UPDATE_CATEGORY_GROUP" | "IMPORT_ASSETS" | "DOCUMENT_UPLOAD";
 type AuditTargetType = "ASSET" | "APPROVAL" | "USER" | "BRANCH" | "DEPT" | "CATEGORY_GROUP" | "SYSTEM";
 
 export const LOGIN_ACTIONS = ["LOGIN", "LOGOUT", "LOGIN_FAILED"];
@@ -76,15 +76,18 @@ export async function getAuditLogs(params: {
     }),
   ]);
 
-  const logsWithUser = await Promise.all(items.map(async (log) => {
-    let user = null;
-    if (log.userId) {
-      user = await db.user.findUnique({
-        where: { id: log.userId },
+  const uniqueUserIds = [...new Set(items.map((log: { userId: string | null }) => log.userId).filter(Boolean))] as string[];
+  const users = uniqueUserIds.length > 0
+    ? await db.user.findMany({
+        where: { id: { in: uniqueUserIds } },
         select: { id: true, realName: true, username: true },
-      });
-    }
-    return { ...log, user };
+      })
+    : [];
+  const userMap = new Map(users.map((u: { id: string; realName: string; username: string }) => [u.id, u]));
+
+  const logsWithUser = items.map((log: { userId: string | null; [key: string]: unknown }) => ({
+    ...log,
+    user: log.userId ? userMap.get(log.userId) ?? null : null,
   }));
 
   return { total, page, pageSize, items: logsWithUser };

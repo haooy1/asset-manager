@@ -18,7 +18,7 @@ export async function GET(
 
     const { id } = await params;
     const branch = await getBranches();
-    const found = branch.find((b) => b.id === id);
+    const found = branch.find((b: { id: string }) => b.id === id);
     if (!found) {
       return NextResponse.json({ error: "NOT_FOUND", message: "分支不存在" }, { status: 404 });
     }

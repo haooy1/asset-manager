@@ -49,6 +49,7 @@
     "autoprefixer": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "eslint-config-prettier": "^10.1.8",
     "postcss": "latest",
     "prettier": "latest",
     "prisma": "^6.6.0",

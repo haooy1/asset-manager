@@ -38,19 +38,13 @@ export default function DashboardPage() {
      */
     async function fetchStats() {
       try {
-        const res = await fetch("/api/assets?page=1&pageSize=9999");
+        const res = await fetch("/api/stats");
         if (!res.ok) return;
         const data = await res.json();
-        const now = new Date();
-        const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-        const expiring = data.items.filter(
-          (a: { warrantyExpiry: string }) =>
-            a.warrantyExpiry && new Date(a.warrantyExpiry) < thirtyDaysLater,
-        );
         setStats({
           total: data.total,
-          inUse: data.items.filter((a: { status: string }) => a.status === "IN_USE").length,
-          expiring: expiring.length,
+          inUse: data.inUse,
+          expiring: data.expiring,
         });
       } catch {}
     }

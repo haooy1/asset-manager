@@ -169,6 +169,26 @@ export async function deleteAsset(id: string) {
   return db.asset.delete({ where: { id } });
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/zip",
+  "application/x-rar-compressed",
+];
+const BLOCKED_EXTENSIONS = [".exe", ".sh", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".msi", ".dll", ".scr"];
+
 /**
  * 上传资产附件（安全文档等）
  */
@@ -178,6 +198,19 @@ export async function uploadDocument(
   file: File,
   expiryDate?: string,
 ) {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`文件大小超过限制（最大 50MB），当前文件大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    throw new Error(`不支持的文件类型: ${file.type}`);
+  }
+
+  const ext = path.extname(file.name).toLowerCase();
+  if (BLOCKED_EXTENSIONS.includes(ext)) {
+    throw new Error(`禁止上传可执行文件: ${ext}`);
+  }
+
   const uploadDir = path.join(process.cwd(), "public", "uploads", assetId);
   await mkdir(uploadDir, { recursive: true });
 

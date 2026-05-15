@@ -1,4 +1,5 @@
 import { getWarrantyReminders, getDocumentReminders, getExpiredWarrantyAssets, getExpiredDocuments } from "@/modules/reminders/services";
+import type { ReminderInfo, DocumentReminderInfo } from "@/modules/reminders/services";
 
 /**
  * 每日提醒扫描任务 - 由 node-cron 调度
@@ -15,21 +16,21 @@ export async function runReminderScan() {
 
     if (warranty.length > 0) {
       console.warn(`[提醒] ${warranty.length} 台设备维保将在30天内到期:`);
-      warranty.forEach((a) => {
+      warranty.forEach((a: ReminderInfo) => {
         console.warn(`  - ${a.assetNo} ${a.name} (${a.branchName ?? "未知分支"}) 剩余 ${a.daysUntilExpiry} 天`);
       });
     }
 
     if (docs.length > 0) {
       console.warn(`[提醒] ${docs.length} 份安全文档将在30天内到期:`);
-      docs.forEach((d) => {
+      docs.forEach((d: DocumentReminderInfo) => {
         console.warn(`  - ${d.name} (${d.assetNo} ${d.assetName}) 剩余 ${d.daysUntilExpiry} 天`);
       });
     }
 
     if (expiredWarranty.length > 0) {
       console.warn(`[提醒] ${expiredWarranty.length} 台设备维保已过期:`);
-      expiredWarranty.forEach((a) => {
+      expiredWarranty.forEach((a: { assetNo: string; name: string; daysSinceExpiry: number }) => {
         console.warn(`  - ${a.assetNo} ${a.name} 已过期 ${a.daysSinceExpiry} 天`);
       });
     }

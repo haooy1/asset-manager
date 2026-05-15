@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-- **全栈框架**: Next.js 14 (App Router) + TypeScript
+- **全栈框架**: Next.js 16 (App Router) + TypeScript
 - **数据库**: PostgreSQL 15+ (ORM: Prisma)
 - **UI**: Tailwind CSS + shadcn/ui
 - **认证**: NextAuth.js

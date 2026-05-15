@@ -45,7 +45,10 @@ export async function getWarrantyReminders(daysThreshold = 30): Promise<Reminder
     orderBy: { warrantyExpiry: "asc" },
   });
 
-  return assets.map((a) => ({
+  return assets.map((a: {
+    id: string; assetNo: string; name: string; model: string | null; brand: string | null;
+    category: string; status: string; warrantyExpiry: Date | null; branch: { name: string } | null;
+  }) => ({
     id: a.id,
     assetNo: a.assetNo,
     name: a.name,
@@ -76,7 +79,10 @@ export async function getExpiredWarrantyAssets() {
     orderBy: { warrantyExpiry: "asc" },
   });
 
-  return assets.map((a) => ({
+  return assets.map((a: {
+    id: string; assetNo: string; name: string;
+    warrantyExpiry: Date | null; branch: { name: string } | null;
+  }) => ({
     id: a.id,
     assetNo: a.assetNo,
     name: a.name,
@@ -108,7 +114,10 @@ export async function getDocumentReminders(daysThreshold = 30): Promise<Document
     orderBy: { expiryDate: "asc" },
   });
 
-  return docs.map((d) => ({
+  return docs.map((d: {
+    id: string; name: string; fileName: string; assetId: string;
+    expiryDate: Date | null; asset: { assetNo: string; name: string };
+  }) => ({
     id: d.id,
     name: d.name,
     fileName: d.fileName,
