@@ -22,6 +22,9 @@ export default function NewAssetPage() {
     description: "",
   });
 
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFileName, setUploadFileName] = useState("");
+
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroupInfo[]>([]);
   const [selectedCategoryGroupId, setSelectedCategoryGroupId] = useState("");
   const [customFields, setCustomFields] = useState<CustomFieldInfo[]>([]);
@@ -93,7 +96,7 @@ export default function NewAssetPage() {
   };
 
   /**
-   * 提交新增资产表单（含自定义字段）
+   * 提交新增资产表单（含自定义字段），安全文档创建后自动上传报告文件
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +133,27 @@ export default function NewAssetPage() {
       }
 
       const result = await res.json();
-      router.push(`/assets/${result.data.id}`);
+      const assetId = result.data.id;
+
+      if (uploadFile) {
+        const formData = new FormData();
+        formData.append("file", uploadFile);
+        formData.append("name", uploadFileName || form.name);
+        if (form.warrantyExpiry) {
+          formData.append("expiryDate", form.warrantyExpiry);
+        }
+
+        const uploadRes = await fetch(`/api/assets/${assetId}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          console.error("文件上传失败，但资产已创建");
+        }
+      }
+
+      router.push(`/assets/${assetId}`);
     } catch {
       setError("网络错误，请重试");
       setLoading(false);
@@ -170,6 +193,28 @@ export default function NewAssetPage() {
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <input type="hidden" name="category" value="SECURITY_DOCUMENT" />
+            </div>
+
+            <div className="rounded-md border border-green-200 bg-green-50/30 p-4">
+              <h3 className="mb-3 text-sm font-medium text-green-800">上传报告文件</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">文件名称</label>
+                  <input value={uploadFileName}
+                    onChange={e => setUploadFileName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    placeholder={form.name || "如 渗透测试报告.pdf"} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">选择文件</label>
+                  <input type="file"
+                    onChange={e => setUploadFile(e.target.files?.[0] || null)}
+                    className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100" />
+                  {uploadFile && (
+                    <p className="mt-1 text-xs text-gray-500">已选择: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {customFields.length > 0 && (
