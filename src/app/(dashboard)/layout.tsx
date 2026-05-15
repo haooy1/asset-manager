@@ -170,8 +170,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}
-                className={`flex-1 flex flex-col items-center py-2 text-xs ${
-                  isActive ? "text-blue-600" : "text-gray-500"
+                className={`flex-1 flex flex-col items-center py-2 text-xs transition-colors ${
+                  isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-400 active:text-blue-600"
                 }`}>
                 <span className="text-lg">{item.icon}</span>
                 <span className="mt-0.5">{item.label}</span>

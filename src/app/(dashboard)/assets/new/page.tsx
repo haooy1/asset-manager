@@ -328,7 +328,7 @@ export default function NewAssetPage() {
                 {loading ? "提交中..." : "确认入库"}
               </button>
               <button type="button" onClick={() => router.back()}
-                className="rounded-md border px-4 py-2 text-sm">取消</button>
+                className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
             </div>
           </form>
         </div>
@@ -545,7 +545,7 @@ export default function NewAssetPage() {
               {loading ? "提交中..." : "确认入库"}
             </button>
             <button type="button" onClick={() => router.back()}
-              className="rounded-md border px-4 py-2 text-sm">取消</button>
+              className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-colors">取消</button>
           </div>
         </form>
       </div>

@@ -181,7 +181,7 @@ export default function AssetDetailPage() {
                           到期: {new Date(doc.expiryDate).toLocaleDateString("zh-CN")}
                         </span>
                       )}
-                      <a href={doc.filePath} target="_blank" className="text-blue-600 hover:underline text-xs" rel="noreferrer">
+                      <a href={doc.filePath} target="_blank" className="text-blue-600 hover:underline text-xs transition-colors" rel="noreferrer">
                         下载
                       </a>
                     </div>
@@ -195,7 +195,7 @@ export default function AssetDetailPage() {
                       <span className="ml-1 text-xs text-gray-500">{doc.fileName}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <a href={doc.filePath} target="_blank" className="text-blue-600 hover:underline text-xs" rel="noreferrer">
+                      <a href={doc.filePath} target="_blank" className="text-blue-600 hover:underline text-xs transition-colors" rel="noreferrer">
                         下载
                       </a>
                     </div>
@@ -213,7 +213,7 @@ export default function AssetDetailPage() {
               {!isEmployee && (
                 <button
                   onClick={() => router.push(`/assets/${asset.id}/edit`)}
-                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   编辑信息
                 </button>
@@ -221,7 +221,7 @@ export default function AssetDetailPage() {
               {asset.categoryGroupId && (
                 <button
                   onClick={() => router.push(`/category-groups/${asset.categoryGroupId}/documents`)}
-                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   📖 管理共享手册
                 </button>

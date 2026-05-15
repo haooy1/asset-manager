@@ -74,7 +74,7 @@ export default function ImportPage() {
       <div className="mb-6 flex items-center gap-4">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
         >
           ← 返回
         </button>

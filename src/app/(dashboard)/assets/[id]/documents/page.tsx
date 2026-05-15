@@ -134,7 +134,7 @@ export default function AssetDocumentsPage() {
         <h1 className="text-2xl font-bold text-gray-900">附件文档</h1>
         {asset && (
           <p className="mt-1 text-sm text-gray-500">
-            <Link href={`/assets/${id}`} className="hover:text-blue-600">{asset.assetNo}</Link>
+            <Link href={`/assets/${id}`} className="hover:text-blue-600 transition-colors">{asset.assetNo}</Link>
             <span className="mx-1">·</span>
             <span>{asset.name}</span>
             <span className="ml-2 text-xs text-gray-400">共 {allDocs.length} 个文件</span>

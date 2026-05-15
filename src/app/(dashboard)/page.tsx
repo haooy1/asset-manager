@@ -96,7 +96,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-red-700">⚠️ 维保即将到期</h2>
-              <Link href="/assets" className="text-xs text-blue-600 hover:underline">查看全部</Link>
+              <Link href="/assets" className="text-xs text-blue-600 hover:underline transition-colors">查看全部</Link>
             </div>
             <ul className="divide-y text-sm">
               {warrantyItems.slice(0, 5).map((item) => (
@@ -119,7 +119,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-red-700">📄 证书即将到期</h2>
-              <Link href="/assets" className="text-xs text-blue-600 hover:underline">查看全部</Link>
+              <Link href="/assets" className="text-xs text-blue-600 hover:underline transition-colors">查看全部</Link>
             </div>
             <ul className="divide-y text-sm">
               {docItems.slice(0, 5).map((item) => (
