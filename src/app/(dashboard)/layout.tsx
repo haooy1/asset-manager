@@ -86,6 +86,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   if (!session) return null;
 
+  const isEmployee = session.user?.role === "EMPLOYEE";
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* 桌面端侧边栏 */}
@@ -96,7 +98,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}
@@ -139,7 +141,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* 移动端下拉菜单 */}
       {sidebarOpen && (
         <div className="md:hidden bg-gray-800 text-white px-3 py-2 space-y-1 border-t border-gray-700">
-          {MOBILE_NAV.map((item) => {
+          {MOBILE_NAV.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
@@ -154,7 +156,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* 移动端底部导航栏 */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div className="flex">
-          {MOBILE_NAV.map((item) => {
+          {MOBILE_NAV.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}

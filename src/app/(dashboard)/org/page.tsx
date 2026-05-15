@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { USER_ROLES, ROLE_LABELS } from "@/modules/org/types";
 
 interface BranchInfo {
@@ -39,6 +40,14 @@ interface UserInfo {
 
 export default function OrgPage() {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (session?.user?.role === "EMPLOYEE") {
+      router.replace("/assets");
+    }
+  }, [session, router]);
+
   const [tab, setTab] = useState<"branches" | "departments" | "users">("branches");
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [departments, setDepartments] = useState<DeptInfo[]>([]);
