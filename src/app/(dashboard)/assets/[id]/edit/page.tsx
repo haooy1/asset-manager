@@ -168,12 +168,24 @@ export default function EditAssetPage() {
       }
 
       if (uploadFiles.length > 0) {
+        let uploadErrors = 0;
         for (const file of uploadFiles) {
           const formData = new FormData();
           formData.append("file", file);
           formData.append("name", uploadFileName || file.name);
           if (form.warrantyExpiry) formData.append("expiryDate", form.warrantyExpiry);
-          await fetch(`/api/assets/${id}`, { method: "POST", body: formData });
+
+          const uploadRes = await fetch(`/api/assets/${id}`, { method: "POST", body: formData });
+          if (!uploadRes.ok) {
+            uploadErrors++;
+            const errText = await uploadRes.text();
+            console.error(`文件 ${file.name} 上传失败:`, errText);
+          }
+        }
+        if (uploadErrors > 0) {
+          setError(`文件上传部分失败 (${uploadErrors}/${uploadFiles.length})，可重试编辑追加`);
+          setSaving(false);
+          return;
         }
       }
 
