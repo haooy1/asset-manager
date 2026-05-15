@@ -1,12 +1,13 @@
 import { importAssets, parseCSV, getCSVTemplate } from "@/modules/assets/import";
-import { getAssetList } from "@/modules/assets/services";
 import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
+import { writeAuditLog } from "@/lib/db/audit";
+import { db } from "@/lib/db/client";
 import { NextResponse } from "next/server";
 
 /**
- * 通过 CSV 文件批量导入资产
- * @param request - Next.js 请求对象，包含 FormData（file）
- * @returns 返回导入结果的 JSON 响应，或 400/401/500 错误响应
+ * 通过 CSV 文件批量导入资产（支持自定义字段）
+ * @param request - Next.js 请求对象，包含 FormData（file, categoryGroupId）
+ * @returns 返回导入结果的 JSON 响应
  */
 export async function POST(request: Request) {
   try {
@@ -18,13 +19,22 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const categoryGroupId = (formData.get("categoryGroupId") as string) || undefined;
 
     if (!file) {
       return NextResponse.json({ error: "VALIDATION_ERROR", message: "请上传CSV文件" }, { status: 400 });
     }
 
+    let customFields: { id: string; name: string; label: string; fieldType: string; options: string | null; required: boolean }[] = [];
+    if (categoryGroupId) {
+      customFields = await db.customField.findMany({
+        where: { categoryGroupId },
+        orderBy: { sortOrder: "asc" },
+      });
+    }
+
     const content = await file.text();
-    const rows = parseCSV(content);
+    const rows = parseCSV(content, customFields);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "VALIDATION_ERROR", message: "CSV文件中无有效数据行" }, { status: 400 });
@@ -34,7 +44,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "VALIDATION_ERROR", message: "单次导入最多1000行" }, { status: 400 });
     }
 
-    const result = await importAssets(rows, user.branchId ?? undefined, user.id);
+    const result = await importAssets(rows, categoryGroupId, user.branchId ?? undefined, user.id);
+
+    writeAuditLog({
+      userId: user.id,
+      username: user.username,
+      action: "IMPORT_ASSETS",
+      targetType: "ASSET",
+      detail: `批量导入资产: 共${result.total}条, 成功${result.success}条, 失败${result.failed}条`,
+    }).catch(() => {});
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("导入资产失败:", error);
@@ -43,15 +62,19 @@ export async function POST(request: Request) {
 }
 
 /**
- * 获取 CSV 导入模板文件
- * @returns 返回 CSV 模板文件的下载响应，或 500 错误响应
+ * 获取 CSV 导入模板文件，支持按设备类型动态生成自定义字段列
+ * @param request - HTTP 请求对象，可选 query 参数 categoryGroupId
+ * @returns 返回 CSV 模板文件的下载响应
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const authError = await requireAuth();
     if (authError) return authError;
 
-    const template = getCSVTemplate();
+    const { searchParams } = new URL(request.url);
+    const categoryGroupId = searchParams.get("categoryGroupId") || undefined;
+
+    const template = await getCSVTemplate(categoryGroupId);
     return new Response(template, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

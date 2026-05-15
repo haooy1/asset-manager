@@ -1,11 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface CategoryGroup {
+  id: string;
+  name: string;
+  label: string;
+  _count: { fields: number; assets: number };
+}
 
 export default function ImportPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [groups, setGroups] = useState<CategoryGroup[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
   const [result, setResult] = useState<{
     total: number;
     success: number;
@@ -14,17 +23,20 @@ export default function ImportPage() {
   } | null>(null);
   const [error, setError] = useState("");
 
-  /**
-   * 下载 CSV 导入模板
-   */
+  useEffect(() => {
+    fetch("/api/category-groups")
+      .then((res) => res.json())
+      .then((data) => setGroups(data.data ?? []))
+      .catch(() => {});
+  }, []);
+
   const handleDownloadTemplate = () => {
-    window.open("/api/assets/import", "_blank");
+    const url = selectedGroupId
+      ? `/api/assets/import?categoryGroupId=${selectedGroupId}`
+      : "/api/assets/import";
+    window.open(url, "_blank");
   };
 
-  /**
-   * 上传 CSV 文件并导入资产
-   * @param e - 文件输入变更事件
-   */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -35,6 +47,7 @@ export default function ImportPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (selectedGroupId) formData.append("categoryGroupId", selectedGroupId);
       const res = await fetch("/api/assets/import", { method: "POST", body: formData });
       if (!res.ok) {
         let msg = "导入失败";
@@ -54,18 +67,44 @@ export default function ImportPage() {
     e.target.value = "";
   };
 
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">批量导入资产</h1>
 
       <div className="space-y-6">
         <div className="rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">导入说明</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">第一步：选择设备类型</h2>
+          <p className="mb-3 text-sm text-gray-500">
+            选择设备类型后，下载的模板将自动包含该类型的自定义字段列。不选择则只包含通用字段。
+          </p>
+          <select
+            value={selectedGroupId}
+            onChange={(e) => setSelectedGroupId(e.target.value)}
+            className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">通用模板（仅基础字段）</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.label}（{g._count.fields} 个自定义字段）
+              </option>
+            ))}
+          </select>
+          {selectedGroup && selectedGroup._count.fields > 0 && (
+            <p className="mt-2 text-xs text-blue-600">
+              已选择「{selectedGroup.label}」，模板将包含 {selectedGroup._count.fields} 个自定义字段列
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">第二步：下载模板并填写</h2>
           <ol className="ml-5 list-decimal space-y-2 text-sm text-gray-600">
             <li>下载 CSV 模板，按模板格式填写设备信息</li>
             <li>必填字段：资产编号、资产名称</li>
             <li>可选字段：品类、型号、品牌、购置日期、维保截止日、存放位置、设备价值、备注</li>
-            <li>品类可选值：PC / PERIPHERAL / NETWORK / SERVER_STORAGE / MOBILE / MEETING / SECURITY_DEVICE / SECURITY_DOCUMENT</li>
+            <li>品类可选值：PC / PERIPHERAL / NETWORK / SERVER_STORAGE / MOBILE / MEETING / SECURITY_DEVICE / SECURITY_DOCUMENT / CUSTOM</li>
             <li>日期格式：YYYY-MM-DD（如 2026-01-15）</li>
             <li>编码建议使用 UTF-8 with BOM（Excel 默认格式）</li>
             <li>单次最多导入 1000 行</li>
@@ -77,7 +116,7 @@ export default function ImportPage() {
         </div>
 
         <div className="rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">上传文件</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">第三步：上传文件导入</h2>
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-6 py-10 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">
             {loading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />

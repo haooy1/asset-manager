@@ -12,6 +12,7 @@ interface ImportRow {
   location?: string;
   value?: string;
   description?: string;
+  [key: string]: string | undefined;
 }
 
 interface ImportError {
@@ -26,7 +27,29 @@ interface ImportResult {
   errors: ImportError[];
 }
 
-const VALID_CATEGORIES = ["PC","PERIPHERAL","NETWORK","SERVER_STORAGE","MOBILE","MEETING","SECURITY_DEVICE","SECURITY_DOCUMENT","CUSTOM"];
+interface CustomFieldDef {
+  id: string;
+  name: string;
+  label: string;
+  fieldType: string;
+  options: string | null;
+  required: boolean;
+}
+
+const FIXED_HEADERS = [
+  { key: "assetNo", label: "资产编号" },
+  { key: "name", label: "资产名称" },
+  { key: "category", label: "品类" },
+  { key: "model", label: "型号" },
+  { key: "brand", label: "品牌" },
+  { key: "purchaseDate", label: "购置日期" },
+  { key: "warrantyExpiry", label: "维保截止日" },
+  { key: "location", label: "存放位置" },
+  { key: "value", label: "设备价值" },
+  { key: "description", label: "备注" },
+];
+
+const VALID_CATEGORIES = ["PC", "PERIPHERAL", "NETWORK", "SERVER_STORAGE", "MOBILE", "MEETING", "SECURITY_DEVICE", "SECURITY_DOCUMENT", "CUSTOM"];
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -47,79 +70,153 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function validateRow(row: ImportRow, lineNumber: number): string | null {
+function validateRow(row: ImportRow, lineNumber: number, customFields: CustomFieldDef[]): string | null {
   if (!row.assetNo || row.assetNo.trim() === "") return `第 ${lineNumber} 行: 资产编号为必填项`;
   if (row.assetNo.length > 50) return `第 ${lineNumber} 行: 资产编号超过50字符`;
   if (!row.name || row.name.trim() === "") return `第 ${lineNumber} 行: 资产名称为必填项`;
   if (row.name.length > 200) return `第 ${lineNumber} 行: 资产名称超过200字符`;
   if (row.category && !VALID_CATEGORIES.includes(row.category)) {
-    return `第 ${lineNumber} 行: 无效的品类 "${row.category}"，可选: ${VALID_CATEGORIES.join("/")}`;
+    return `第 ${lineNumber} 行: 无效的品类 "${row.category}"`;
   }
   if (row.purchaseDate && isNaN(Date.parse(row.purchaseDate))) return `第 ${lineNumber} 行: 购置日期格式无效`;
   if (row.warrantyExpiry && isNaN(Date.parse(row.warrantyExpiry))) return `第 ${lineNumber} 行: 维保截止日格式无效`;
   if (row.value && isNaN(Number(row.value))) return `第 ${lineNumber} 行: 设备价值不是有效数字`;
   if (row.location && row.location.length > 100) return `第 ${lineNumber} 行: 存放位置超过100字符`;
+
+  for (const cf of customFields) {
+    if (cf.required) {
+      const val = row[`cf_${cf.name}`];
+      if (!val || val.trim() === "") {
+        return `第 ${lineNumber} 行: 自定义字段"${cf.label}"为必填项`;
+      }
+    }
+  }
+
   return null;
 }
 
+async function getCustomFields(categoryGroupId?: string): Promise<CustomFieldDef[]> {
+  if (!categoryGroupId) return [];
+  const fields = await db.customField.findMany({
+    where: { categoryGroupId },
+    orderBy: { sortOrder: "asc" },
+  });
+  return fields;
+}
+
 /**
- * 解析 CSV 内容并返回结构化行数据
+ * 生成 CSV 模板内容，根据设备类型动态添加自定义字段列
+ * @param categoryGroupId - 可选的设备类型 ID，传入后模板会包含该类型的自定义字段列
+ * @returns CSV 模板字符串（含 BOM 头，兼容 Excel 中文显示）
  */
-export function parseCSV(csvContent: string): ImportRow[] {
+export async function getCSVTemplate(categoryGroupId?: string): Promise<string> {
+  const customFields = await getCustomFields(categoryGroupId);
+
+  const headers = [...FIXED_HEADERS.map((h) => h.label)];
+  for (const cf of customFields) {
+    headers.push(cf.label);
+  }
+
+  const exampleRow = [
+    "PC-2026-001",
+    "ThinkPad X1 Carbon",
+    "PC",
+    "20XS",
+    "联想",
+    "2026-01-15",
+    "2029-01-15",
+    "3楼办公室",
+    "8999.00",
+    "新员工入职设备",
+  ];
+  for (const cf of customFields) {
+    if (cf.fieldType === "SELECT" && cf.options) {
+      exampleRow.push(cf.options.split(",")[0].trim());
+    } else if (cf.fieldType === "BOOLEAN") {
+      exampleRow.push("是");
+    } else if (cf.fieldType === "NUMBER") {
+      exampleRow.push("0");
+    } else if (cf.fieldType === "DATE") {
+      exampleRow.push("2026-01-15");
+    } else {
+      exampleRow.push("示例值");
+    }
+  }
+
+  const csvContent = headers.join(",") + "\n" + exampleRow.join(",") + "\n";
+  return "\uFEFF" + csvContent;
+}
+
+/**
+ * 解析 CSV 内容，返回结构化行数据（含自定义字段列）
+ * @param csvContent - CSV 文件文本内容
+ * @param customFields - 自定义字段定义列表，用于解析 cf_ 前缀的列
+ * @returns 解析后的行数据数组
+ */
+export function parseCSV(csvContent: string, customFields: CustomFieldDef[]): ImportRow[] {
   const lines = csvContent.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
   const header = parseCSVLine(lines[0]).map((h) => h.replace(/^\uFEFF/, ""));
-  const rows: ImportRow[] = [];
 
+  const labelToKey: Record<string, string> = {};
+  for (const h of FIXED_HEADERS) {
+    labelToKey[h.label] = h.key;
+  }
+  for (const cf of customFields) {
+    labelToKey[cf.label] = `cf_${cf.name}`;
+  }
+
+  const rows: ImportRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     const values = parseCSVLine(line);
     const row: Record<string, string> = {};
     header.forEach((h, idx) => {
-      row[h] = values[idx] ?? "";
+      const key = labelToKey[h] ?? h;
+      row[key] = (values[idx] ?? "").trim();
     });
-    rows.push(row as unknown as ImportRow);
+    rows.push(row as ImportRow);
   }
 
   return rows;
 }
 
 /**
- * CSV 模板内容
- */
-export function getCSVTemplate(): string {
-  return (
-    "资产编号,资产名称,品类,型号,品牌,购置日期,维保截止日,存放位置,设备价值,备注\n" +
-    "PC-2026-001,ThinkPad X1 Carbon,PC,20XS,联想,2026-01-15,2029-01-15,3楼办公室,8999.00,新员工入职设备\n" +
-    "NET-2026-001,华为交换机 S5735,NETWORK,S5735-L24T4X,华为,2025-06-01,2028-06-01,1楼机房,3500.00,核心交换机\n"
-  );
-}
-
-/**
- * 批量导入资产，返回详细的导入结果
+ * 批量导入资产，支持自定义字段值
+ * @param rows - 解析后的行数据数组
+ * @param categoryGroupId - 设备类型 ID，用于关联自定义字段
+ * @param branchId - 当前用户所属分支 ID
+ * @param createdBy - 当前用户 ID
+ * @returns 导入结果（总数、成功数、失败数、错误详情）
  */
 export async function importAssets(
   rows: ImportRow[],
+  categoryGroupId?: string,
   branchId?: string,
   createdBy?: string,
 ): Promise<ImportResult> {
   const errors: ImportError[] = [];
   let success = 0;
 
+  const customFields = await getCustomFields(categoryGroupId);
+  const fieldNameToField: Record<string, CustomFieldDef> = {};
+  for (const cf of customFields) {
+    fieldNameToField[cf.name] = cf;
+  }
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const lineNumber = i + 2;
 
-    const validationError = validateRow(row, lineNumber);
+    const validationError = validateRow(row, lineNumber, customFields);
     if (validationError) {
       errors.push({ row: lineNumber, message: validationError });
       continue;
     }
 
     try {
-      // 检查资产编号是否已存在
       const existing = await db.asset.findUnique({ where: { assetNo: row.assetNo } });
       if (existing) {
         errors.push({ row: lineNumber, message: `第 ${lineNumber} 行: 资产编号 "${row.assetNo}" 已存在` });
@@ -129,21 +226,34 @@ export async function importAssets(
       const data: Record<string, unknown> = {
         assetNo: row.assetNo,
         name: row.name,
-        category: (row.category ?? "PC") as AssetCategory,
-        model: row.model ?? null,
-        brand: row.brand ?? null,
+        category: (row.category || "PC") as AssetCategory,
+        model: row.model || null,
+        brand: row.brand || null,
         purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
         warrantyExpiry: row.warrantyExpiry ? new Date(row.warrantyExpiry) : null,
-        location: row.location ?? null,
+        location: row.location || null,
         value: row.value ? Number(row.value) : null,
-        description: row.description ?? null,
+        description: row.description || null,
         status: "IDLE",
       };
 
       if (branchId) data.branchId = branchId;
       if (createdBy) data.createdBy = createdBy;
+      if (categoryGroupId) data.categoryGroupId = categoryGroupId;
 
-      await db.asset.create({ data: data as Parameters<typeof db.asset.create>[0]["data"] });
+      const asset = await db.asset.create({ data: data as never });
+
+      const cfValues: { assetId: string; fieldId: string; value: string }[] = [];
+      for (const cf of customFields) {
+        const val = row[`cf_${cf.name}`];
+        if (val && val.trim() !== "") {
+          cfValues.push({ assetId: asset.id, fieldId: cf.id, value: val.trim() });
+        }
+      }
+      if (cfValues.length > 0) {
+        await db.customFieldValue.createMany({ data: cfValues });
+      }
+
       success++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "未知错误";
