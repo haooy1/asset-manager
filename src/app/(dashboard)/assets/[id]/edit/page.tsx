@@ -31,6 +31,7 @@ export default function EditAssetPage() {
   const [uploadFileName, setUploadFileName] = useState("");
 
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroupInfo[]>([]);
+  const [originalStatus, setOriginalStatus] = useState("");
   const [selectedCategoryGroupId, setSelectedCategoryGroupId] = useState("");
   const [customFields, setCustomFields] = useState<CustomFieldInfo[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -79,6 +80,7 @@ export default function EditAssetPage() {
           description: asset.description || "",
           status: asset.status || "",
         });
+        setOriginalStatus(asset.status || "");
 
         const groupId = asset.categoryGroupId || "";
         setSelectedCategoryGroupId(groupId);
@@ -143,6 +145,12 @@ export default function EditAssetPage() {
       categoryGroupId: selectedCategoryGroupId || undefined,
       customFieldValues,
     };
+
+    if (form.status && form.status !== originalStatus) {
+      body.status = form.status;
+    } else {
+      delete body.status;
+    }
 
     try {
       const res = await fetch(`/api/assets/${id}`, {
