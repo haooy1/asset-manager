@@ -116,18 +116,21 @@ function AssetListContent() {
                   <th className="px-4 py-3 font-medium">状态</th>
                   <th className="px-4 py-3 font-medium">归属人</th>
                   <th className="px-4 py-3 font-medium">所属分支</th>
+                  <th className="px-4 py-3 font-medium">文档</th>
                   <th className="px-4 py-3 font-medium">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
                       暂无资产数据
                     </td>
                   </tr>
                 ) : (
-                  data.items.map((asset) => (
+                  data.items.map((asset) => {
+                    const docCount = asset._count?.documents ?? 0;
+                    return (
                     <tr key={asset.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-mono text-xs text-gray-500">{asset.assetNo}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">
@@ -146,12 +149,25 @@ function AssetListContent() {
                       <td className="px-4 py-3 text-gray-600">{asset.assignedUser?.realName ?? "-"}</td>
                       <td className="px-4 py-3 text-gray-600">{asset.branch?.name ?? "-"}</td>
                       <td className="px-4 py-3">
+                        {docCount > 0 ? (
+                          <Link href={`/assets/${asset.id}`} className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs">
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            {docCount}
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
                         <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs">
                           查看
                         </Link>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

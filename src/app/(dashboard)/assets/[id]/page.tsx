@@ -150,9 +150,11 @@ export default function AssetDetailPage() {
             </div>
           )}
 
-          {asset.category === "SECURITY_DOCUMENT" && asset.documents && asset.documents.length > 0 && (
+          {asset.documents && asset.documents.length > 0 && (
             <div className="rounded-lg border bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">附件文档</h2>
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                {asset.category === "SECURITY_DOCUMENT" ? "报告文件" : "附件文档"}
+              </h2>
               <ul className="divide-y text-sm">
                 {asset.documents.map((doc) => (
                   <li key={doc.id} className="flex items-center justify-between py-2">
