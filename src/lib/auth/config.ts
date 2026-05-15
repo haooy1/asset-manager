@@ -1,8 +1,16 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { headers } from "next/headers";
 import { db } from "@/lib/db/client";
 import { writeAuditLog } from "@/lib/db/audit";
+
+async function getClientIp(): Promise<string | undefined> {
+  const h = await headers();
+  const forwarded = h.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return h.get("x-real-ip") ?? undefined;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -20,6 +28,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { username: credentials.username as string },
         });
 
+        const ip = await getClientIp();
+
         if (!user || !user.isActive) {
           if (credentials.username) {
             writeAuditLog({
@@ -28,6 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               action: "LOGIN_FAILED",
               targetType: "SYSTEM",
               detail: `登录失败: 用户不存在或已禁用 (${credentials.username})`,
+              clientIp: ip,
             }).catch(() => {});
           }
           return null;
@@ -45,6 +56,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             action: "LOGIN_FAILED",
             targetType: "SYSTEM",
             detail: `登录失败: 密码错误 (${user.username})`,
+            clientIp: ip,
           }).catch(() => {});
           return null;
         }
@@ -91,9 +103,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         action: "LOGIN",
         targetType: "SYSTEM",
         detail: `${user.name || user.username} 登录系统`,
+        clientIp: await getClientIp(),
       }).catch(() => {});
     },
-    async signOut({ token }) {
+    async signOut(message) {
+      const token = "token" in message ? message.token : null;
       if (token?.id) {
         writeAuditLog({
           userId: token.id as string,
@@ -101,6 +115,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           action: "LOGOUT",
           targetType: "SYSTEM",
           detail: `${token.name || token.username} 登出系统`,
+          clientIp: await getClientIp(),
         }).catch(() => {});
       }
     },

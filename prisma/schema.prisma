@@ -184,6 +184,7 @@ model AuditLog {
   targetType  String    @db.VarChar(50)
   targetId    String?   @db.VarChar(100)
   detail      String?   @db.Text
+  clientIp    String?   @db.VarChar(50)
   createdAt   DateTime  @default(now())
 
   @@map("audit_logs")

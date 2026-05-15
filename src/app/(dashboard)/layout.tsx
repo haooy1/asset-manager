@@ -45,7 +45,7 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "类型配置",
+    label: "字段配置",
     href: "/assets/types",
     icon: (
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,4 @@
-import { getAuditLogs } from "@/lib/db/audit";
+import { getAuditLogs, type LogCategory } from "@/lib/db/audit";
 import { requireRole } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -11,10 +11,12 @@ export async function GET(request: Request) {
     if (authError) return authError;
 
     const { searchParams } = new URL(request.url);
+    const category = searchParams.get("category") as LogCategory | null;
     const result = await getAuditLogs({
       userId: searchParams.get("userId") ?? undefined,
       action: searchParams.get("action") ?? undefined,
       targetType: searchParams.get("targetType") ?? undefined,
+      category: category && ["login", "user", "admin"].includes(category) ? category : undefined,
       page: Number(searchParams.get("page")) || 1,
       pageSize: Number(searchParams.get("pageSize")) || 50,
     });
