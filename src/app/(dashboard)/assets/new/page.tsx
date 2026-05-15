@@ -171,6 +171,93 @@ export default function NewAssetPage() {
               </div>
               <input type="hidden" name="category" value="SECURITY_DOCUMENT" />
             </div>
+
+            {customFields.length > 0 && (
+              <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4">
+                <h3 className="mb-3 text-sm font-medium text-blue-800">安全文档 — 详细信息</h3>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {customFields.map((field) => {
+                    const value = fieldValues[field.id] ?? "";
+
+                    if (field.fieldType === "BOOLEAN") {
+                      return (
+                        <label key={field.id} className="flex items-center gap-2 pt-2">
+                          <input type="checkbox" checked={value === "true"}
+                            onChange={e => handleFieldValueChange(field.id, e.target.checked ? "true" : "false")}
+                            className="rounded" />
+                          <span className="text-sm text-gray-700">{field.label}{field.required ? " *" : ""}</span>
+                        </label>
+                      );
+                    }
+
+                    if (field.fieldType === "SELECT" && field.options) {
+                      const opts = field.options.split(",").map(o => o.trim());
+                      return (
+                        <div key={field.id}>
+                          <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                          <select value={value}
+                            onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                            required={field.required}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <option value="">-- 请选择 --</option>
+                            {opts.map((opt) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    }
+
+                    if (field.fieldType === "DATE") {
+                      return (
+                        <div key={field.id}>
+                          <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                          <input type="date" value={value}
+                            onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                            required={field.required}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                        </div>
+                      );
+                    }
+
+                    if (field.fieldType === "NUMBER") {
+                      return (
+                        <div key={field.id}>
+                          <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                          <input type="number" step="any" value={value}
+                            onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                            required={field.required}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                        </div>
+                      );
+                    }
+
+                    if (field.fieldType === "LONGTEXT") {
+                      return (
+                        <div key={field.id} className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                          <textarea value={value}
+                            onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                            required={field.required} rows={3}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={field.id}>
+                        <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
+                        <input value={value}
+                          onChange={e => handleFieldValueChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700">备注说明</label>
               <textarea name="description" value={form.description} onChange={handleChange} rows={3}

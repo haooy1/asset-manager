@@ -82,32 +82,40 @@ export default function AssetDetailPage() {
                   {asset.categoryGroup?.label || CATEGORY_LABELS[asset.category]}
                 </dd>
               </div>
-              <div>
-                <dt className="text-gray-500">型号</dt>
-                <dd className="mt-1 text-gray-900">{asset.model ?? "-"}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">品牌</dt>
-                <dd className="mt-1 text-gray-900">{asset.brand ?? "-"}</dd>
-              </div>
+              {asset.category !== "SECURITY_DOCUMENT" && (
+                <>
+                  <div>
+                    <dt className="text-gray-500">型号</dt>
+                    <dd className="mt-1 text-gray-900">{asset.model ?? "-"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500">品牌</dt>
+                    <dd className="mt-1 text-gray-900">{asset.brand ?? "-"}</dd>
+                  </div>
+                </>
+              )}
               <div>
                 <dt className="text-gray-500">所属分支</dt>
                 <dd className="mt-1 text-gray-900">{asset.branch?.name ?? "-"}</dd>
               </div>
+              {asset.category !== "SECURITY_DOCUMENT" && (
+                <div>
+                  <dt className="text-gray-500">存放位置</dt>
+                  <dd className="mt-1 text-gray-900">{asset.location ?? "-"}</dd>
+                </div>
+              )}
+              {asset.category !== "SECURITY_DOCUMENT" && (
+                <div>
+                  <dt className="text-gray-500">设备价值</dt>
+                  <dd className="mt-1 text-gray-900">{asset.value != null ? `¥${Number(asset.value).toLocaleString()}` : "-"}</dd>
+                </div>
+              )}
               <div>
-                <dt className="text-gray-500">存放位置</dt>
-                <dd className="mt-1 text-gray-900">{asset.location ?? "-"}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">设备价值</dt>
-                <dd className="mt-1 text-gray-900">{asset.value != null ? `¥${Number(asset.value).toLocaleString()}` : "-"}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">购置日期</dt>
+                <dt className="text-gray-500">{asset.category === "SECURITY_DOCUMENT" ? "生效日期" : "购置日期"}</dt>
                 <dd className="mt-1 text-gray-900">{asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString("zh-CN") : "-"}</dd>
               </div>
               <div>
-                <dt className="text-gray-500">维保截止日</dt>
+                <dt className="text-gray-500">{asset.category === "SECURITY_DOCUMENT" ? "到期日期" : "维保截止日"}</dt>
                 <dd className={`mt-1 ${asset.warrantyExpiry && new Date(asset.warrantyExpiry) < new Date() ? "text-red-600 font-medium" : "text-gray-900"}`}>
                   {asset.warrantyExpiry ? new Date(asset.warrantyExpiry).toLocaleDateString("zh-CN") : "-"}
                   {asset.warrantyExpiry && new Date(asset.warrantyExpiry) < new Date() && " ⚠️ 已过期"}
