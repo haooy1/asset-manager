@@ -192,12 +192,16 @@ export default function AssetDetailPage() {
                 </button>
               )}
               {asset.status === "IDLE" && (
-                <button className="block w-full rounded-md bg-blue-600 px-3 py-2 text-left text-sm text-white hover:bg-blue-700">
+                <button
+                  onClick={() => router.push(`/approvals/new?assetId=${asset.id}`)}
+                  className="block w-full rounded-md bg-blue-600 px-3 py-2 text-left text-sm text-white hover:bg-blue-700">
                   发起领用
                 </button>
               )}
-              {asset.status === "IN_USE" && (
-                <button className="block w-full rounded-md border border-red-300 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+              {(asset.status === "IN_USE" || asset.status === "BORROWING") && (
+                <button
+                  onClick={() => router.push(`/approvals/new?assetId=${asset.id}&type=RETURN`)}
+                  className="block w-full rounded-md border border-red-300 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
                   发起归还
                 </button>
               )}

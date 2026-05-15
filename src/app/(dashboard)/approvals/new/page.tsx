@@ -1,19 +1,20 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import type { AssetInfo } from "@/modules/assets/types";
 
-export default function NewApprovalPage() {
+function NewApprovalForm() {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    type: "BORROW",
-    assetId: "",
+    type: searchParams.get("type") || "BORROW",
+    assetId: searchParams.get("assetId") || "",
     reason: "",
   });
 
@@ -114,5 +115,13 @@ export default function NewApprovalPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function NewApprovalPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>}>
+      <NewApprovalForm />
+    </Suspense>
   );
 }
