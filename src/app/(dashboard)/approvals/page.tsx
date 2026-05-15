@@ -139,7 +139,7 @@ export default function ApprovalListPage() {
                           <span className="mx-2 text-gray-300">|</span>
                           <button
                             onClick={() => handleCancel(ap.id)}
-                            className="rounded px-1.5 py-0.5 text-red-500 text-xs transition-colors hover:bg-red-50 hover:text-red-700"
+                            className="bg-transparent border-0 cursor-pointer rounded px-1.5 py-0.5 text-red-500 text-xs transition-colors hover:bg-red-50 hover:text-red-700"
                           >
                             撤销
                           </button>
