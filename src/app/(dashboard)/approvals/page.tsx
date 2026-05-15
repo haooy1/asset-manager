@@ -14,6 +14,11 @@ export default function ApprovalListPage() {
   const [items, setItems] = useState<ApprovalInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"my" | "pending" | "execute">("my");
+  const isEmployee = session?.user?.role === "EMPLOYEE";
+
+  const tabs = isEmployee
+    ? ([["my", "我的申请"]] as const)
+    : ([["my", "我的申请"], ["pending", "待我审批"], ["execute", "待我执行"]] as const);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -50,11 +55,7 @@ export default function ApprovalListPage() {
       </div>
 
       <div className="mb-4 flex gap-2 border-b">
-        {([
-          ["my", "我的申请"],
-          ["pending", "待我审批"],
-          ["execute", "待我执行"],
-        ] as const).map(([v, label]) => (
+        {tabs.map(([v, label]) => (
           <button
             key={v}
             onClick={() => setView(v)}

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 /**
  * 获取审批列表，支持按视图类型、状态等条件筛选
- * - view=my: 我的申请（所有角色可用）
+ * - view=my: 我的申请（所有角色可用，EMPLOYEE 强制此视图）
  * - view=pending: 待审批（DEPT_MANAGER+）
  * - view=execute: 待执行（SUPER_ADMIN/BRANCH_ADMIN）
  * - view=all: 全部审批（SUPER_ADMIN/BRANCH_ADMIN）
@@ -20,14 +20,8 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-    const view = (searchParams.get("view") as "my" | "pending" | "execute" | "all") ?? "my";
-
-    if (view !== "my" && user.role === "EMPLOYEE") {
-      return NextResponse.json(
-        { error: "FORBIDDEN", message: "权限不足" },
-        { status: 403 },
-      );
-    }
+    const viewRaw = (searchParams.get("view") as "my" | "pending" | "execute" | "all") ?? "my";
+    const view = user.role === "EMPLOYEE" ? "my" : viewRaw;
 
     const result = await getApprovals({
       view,
