@@ -60,17 +60,24 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    if (body.status) {
+    const normalizedBody = {
+      ...body,
+      purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : null,
+      warrantyExpiry: body.warrantyExpiry ? new Date(body.warrantyExpiry) : null,
+      value: body.value != null && body.value !== "" ? Number(body.value) : undefined,
+    };
+
+    if (normalizedBody.status) {
       const current = await getAssetById(id);
-      if (current && !validateStatusTransition(current.status as AssetStatus, body.status as AssetStatus)) {
+      if (current && !validateStatusTransition(current.status as AssetStatus, normalizedBody.status as AssetStatus)) {
         return NextResponse.json(
-          { error: "INVALID_TRANSITION", message: `不允许从「${current.status}」变更为「${body.status}」` },
+          { error: "INVALID_TRANSITION", message: `不允许从「${current.status}」变更为「${normalizedBody.status}」` },
           { status: 400 },
         );
       }
     }
 
-    const asset = await updateAsset(id, body);
+    const asset = await updateAsset(id, normalizedBody);
     return NextResponse.json({ data: asset });
   } catch (error) {
     console.error("更新资产失败:", error);
