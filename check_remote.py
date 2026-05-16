@@ -1,11 +1,25 @@
 import paramiko
 import sys
+import os
+
+# 从环境变量读取部署凭证
+HOST = os.environ.get("DEPLOY_HOST", "")
+USER = os.environ.get("DEPLOY_USER", "root")
+PASSWORD = os.environ.get("DEPLOY_PASSWORD", "")
+
+if not HOST or not PASSWORD:
+    print("错误：未设置部署环境变量。")
+    print("请设置以下环境变量后重试：")
+    print("  DEPLOY_HOST     - 服务器IP地址")
+    print("  DEPLOY_USER     - SSH用户名（默认root）")
+    print("  DEPLOY_PASSWORD - SSH密码")
+    sys.exit(1)
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 try:
-    ssh.connect('100.87.31.92', username='root', password='Secu@7766', timeout=10)
+    ssh.connect(HOST, username=USER, password=PASSWORD, timeout=10)
     print("SSH连接成功")
 except Exception as e:
     print(f"SSH连接失败: {e}")

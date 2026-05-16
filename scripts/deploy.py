@@ -2,9 +2,18 @@
 """Upload and execute deployment scripts via SFTP"""
 import paramiko, sys, os
 
-HOST = "100.87.31.92"
-USER = "root"
-PASS = "Secu@7766"
+# 从环境变量读取部署凭证
+HOST = os.environ.get("DEPLOY_HOST", "")
+USER = os.environ.get("DEPLOY_USER", "root")
+PASS = os.environ.get("DEPLOY_PASSWORD", "")
+
+if not HOST or not PASS:
+    print("错误：未设置部署环境变量。")
+    print("请设置以下环境变量后重试：")
+    print("  DEPLOY_HOST     - 服务器IP地址")
+    print("  DEPLOY_USER     - SSH用户名（默认root）")
+    print("  DEPLOY_PASSWORD - SSH密码")
+    sys.exit(1)
 
 class RS:
     def __init__(self):
@@ -48,7 +57,7 @@ if [ ! -f .env ]; then
   cat > .env << 'EOF'
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/asset_manager?schema=public
 AUTH_SECRET=CHANGE_ME_IN_PRODUCTION
-AUTH_URL=http://100.87.31.92:3000
+AUTH_URL=http://__DEPLOY_HOST__:3000
 EOF
   echo ".env created"
 fi
@@ -63,6 +72,7 @@ echo "=== Verify ==="
 ls /opt/asset-manager/node_modules/next/package.json && echo "DEPENDENCIES OK" || echo "DEPENDENCIES MISSING"
 echo "=== INSTALL DONE ==="
 """
+    script = script.replace("__DEPLOY_HOST__", HOST)
     with open('/tmp/deploy_install.sh', 'w') as f:
         f.write(script)
     rs.upload('/tmp/deploy_install.sh', '/tmp/deploy_install.sh')

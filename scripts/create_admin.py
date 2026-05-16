@@ -1,10 +1,25 @@
 #!/usr/bin/env python3
 """Create admin user on remote server"""
 import paramiko
+import os
+import sys
+
+# 从环境变量读取部署凭证
+HOST = os.environ.get("DEPLOY_HOST", "")
+USER = os.environ.get("DEPLOY_USER", "root")
+PASSWORD = os.environ.get("DEPLOY_PASSWORD", "")
+
+if not HOST or not PASSWORD:
+    print("错误：未设置部署环境变量。")
+    print("请设置以下环境变量后重试：")
+    print("  DEPLOY_HOST     - 服务器IP地址")
+    print("  DEPLOY_USER     - SSH用户名（默认root）")
+    print("  DEPLOY_PASSWORD - SSH密码")
+    sys.exit(1)
 
 c = paramiko.SSHClient()
 c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-c.connect('100.87.31.92', 22, 'root', 'Secu@7766', timeout=30, allow_agent=False, look_for_keys=False)
+c.connect(HOST, 22, USER, PASSWORD, timeout=30, allow_agent=False, look_for_keys=False)
 
 # Write a JS script, upload via SFTP, then execute
 js_script = r"""
@@ -66,11 +81,13 @@ const db = new PrismaClient();
 })();
 """
 
-with open('E:/08_code/asystem/scripts/create_admin.js', 'w') as f:
+import tempfile
+tmp_file = os.path.join(tempfile.gettempdir(), 'create_admin.js')
+with open(tmp_file, 'w') as f:
     f.write(js_script)
 
 sftp = c.open_sftp()
-sftp.put('E:/08_code/asystem/scripts/create_admin.js', '/tmp/create_admin.js')
+sftp.put(tmp_file, '/tmp/create_admin.js')
 sftp.close()
 
 stdin, stdout, stderr = c.exec_command('cd /opt/asset-manager && node /tmp/create_admin.js', timeout=60)
