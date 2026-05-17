@@ -173,3 +173,17 @@ export async function updateUser(
     },
   });
 }
+
+/**
+ * 更新用户密码（独立函数，用于密码修改场景）
+ * @param id - 用户 ID
+ * @param password - 新密码（明文，函数内部会哈希）
+ */
+export async function updateUserPassword(id: string, password: string) {
+  const hashedPassword = await hash(password, 12);
+  return db.user.update({
+    where: { id },
+    data: { password: hashedPassword },
+    select: { id: true, username: true },
+  });
+}
