@@ -180,11 +180,11 @@ export default function OrgPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">组织管理</h1>
 
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex gap-2 border-b">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-2 overflow-x-auto border-b pb-px">
           {(["branches", "departments", "users"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+              className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition ${
                 tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
               }`}>
               {t === "branches" ? "分支管理" : t === "departments" ? "部门管理" : "用户管理"}
@@ -192,7 +192,7 @@ export default function OrgPage() {
           ))}
         </div>
         <button onClick={() => { setShowForm(true); setForm({ ...form, formType: tab === "branches" ? "branch" : tab === "departments" ? "department" : "user", name: "", code: "", address: "", contact: "", branchId: "", username: "", password: "", realName: "", role: "EMPLOYEE", departmentId: "" }); setError(""); setMsg(""); }}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:px-4">
           + 新增{tab === "branches" ? "分支" : tab === "departments" ? "部门" : "用户"}
         </button>
       </div>

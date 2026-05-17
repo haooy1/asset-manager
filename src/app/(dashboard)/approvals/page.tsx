@@ -68,19 +68,19 @@ export default function ApprovalListPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">审批管理</h1>
-        <Link href="/approvals/new" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">审批管理</h1>
+        <Link href="/approvals/new" className="rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 sm:px-4">
           + 发起申请
         </Link>
       </div>
 
-      <div className="mb-4 flex gap-2 border-b">
+      <div className="mb-4 flex gap-2 overflow-x-auto border-b pb-px">
         {tabs.map(([v, label]) => (
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition ${
               view === v
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -96,62 +96,106 @@ export default function ApprovalListPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50 text-gray-600">
-              <tr>
-                <th className="px-4 py-3 font-medium">类型</th>
-                <th className="px-4 py-3 font-medium">资产</th>
-                <th className="px-4 py-3 font-medium">申请人</th>
-                <th className="px-4 py-3 font-medium">状态</th>
-                <th className="px-4 py-3 font-medium">时间</th>
-                <th className="px-4 py-3 font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {items.length === 0 ? (
+        <>
+          {/* 移动端卡片列表 */}
+          <div className="md:hidden space-y-3">
+            {items.length === 0 ? (
+              <div className="rounded-lg border bg-white py-12 text-center text-gray-500 shadow-sm">
+                暂无审批记录
+              </div>
+            ) : (
+              items.map((ap) => (
+                <div key={ap.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                  <div className="mb-2 flex items-start justify-between">
+                    <span className="font-medium text-gray-900">{TYPE_LABELS[ap.type as ApprovalType]}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[ap.status as ApprovalStatus]}`}>
+                      {STATUS_LABELS[ap.status as ApprovalStatus]}
+                    </span>
+                  </div>
+                  <div className="mb-1 text-sm text-gray-900">{ap.asset.name}</div>
+                  <div className="mb-3 font-mono text-xs text-gray-400">{ap.asset.assetNo}</div>
+                  <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600">
+                    <span>申请人: {ap.applicant?.realName}</span>
+                    <span className="text-gray-300">|</span>
+                    <span>{new Date(ap.createdAt).toLocaleDateString("zh-CN")}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/approvals/${ap.id}`}
+                      className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                      查看详情
+                    </Link>
+                    {view === "my" && ap.status === "PENDING" && (
+                      <button
+                        onClick={() => handleCancel(ap.id)}
+                        className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                      >
+                        撤销
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 桌面端表格 */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b bg-gray-50 text-gray-600">
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                    暂无审批记录
-                  </td>
+                  <th className="px-4 py-3 font-medium">类型</th>
+                  <th className="px-4 py-3 font-medium">资产</th>
+                  <th className="px-4 py-3 font-medium">申请人</th>
+                  <th className="px-4 py-3 font-medium">状态</th>
+                  <th className="px-4 py-3 font-medium">时间</th>
+                  <th className="px-4 py-3 font-medium">操作</th>
                 </tr>
-              ) : (
-                items.map((ap) => (
-                  <tr key={ap.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{TYPE_LABELS[ap.type as ApprovalType]}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {ap.asset.name} <span className="text-xs text-gray-400">{ap.asset.assetNo}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{ap.applicant?.realName}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[ap.status as ApprovalStatus]}`}>
-                        {STATUS_LABELS[ap.status as ApprovalStatus]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      {new Date(ap.createdAt).toLocaleString("zh-CN")}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <Link href={`/approvals/${ap.id}`}
-                        className="rounded px-1.5 py-0.5 text-blue-600 text-xs transition-colors hover:bg-blue-50 hover:text-blue-800">查看</Link>
-                      {view === "my" && ap.status === "PENDING" && (
-                        <>
-                          <span className="mx-2 text-gray-300">|</span>
-                          <button
-                            onClick={() => handleCancel(ap.id)}
-                            className="bg-transparent border-0 cursor-pointer rounded px-1.5 py-0.5 text-red-500 text-xs transition-colors hover:bg-red-50 hover:text-red-700"
-                          >
-                            撤销
-                          </button>
-                        </>
-                      )}
+              </thead>
+              <tbody className="divide-y">
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                      暂无审批记录
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  items.map((ap) => (
+                    <tr key={ap.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900">{TYPE_LABELS[ap.type as ApprovalType]}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {ap.asset.name} <span className="text-xs text-gray-400">{ap.asset.assetNo}</span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{ap.applicant?.realName}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[ap.status as ApprovalStatus]}`}>
+                          {STATUS_LABELS[ap.status as ApprovalStatus]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {new Date(ap.createdAt).toLocaleString("zh-CN")}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Link href={`/approvals/${ap.id}`}
+                          className="rounded px-3 py-1.5 text-blue-600 text-sm transition-colors hover:bg-blue-50 hover:text-blue-800">查看</Link>
+                        {view === "my" && ap.status === "PENDING" && (
+                          <>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <button
+                              onClick={() => handleCancel(ap.id)}
+                              className="bg-transparent border-0 cursor-pointer rounded px-3 py-1.5 text-red-500 text-sm transition-colors hover:bg-red-50 hover:text-red-700"
+                            >
+                              撤销
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

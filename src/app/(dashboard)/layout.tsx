@@ -85,8 +85,13 @@ const MOBILE_NAV = [
   { label: "首页", href: "/", icon: "🏠" },
   { label: "资产", href: "/assets", icon: "📦" },
   { label: "审批", href: "/approvals", icon: "✅" },
-  { label: "组织", href: "/org", icon: "👥" },
-  { label: "类型", href: "/assets/types", icon: "⚙️" },
+  { label: "更多", href: "#", icon: "☰", isMore: true },
+];
+
+const MORE_MENU_ITEMS = [
+  { label: "组织管理", href: "/org", icon: "👥" },
+  { label: "字段配置", href: "/assets/types", icon: "⚙️" },
+  { label: "操作日志", href: "/audit-logs", icon: "📋", adminOnly: true },
 ];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -94,6 +99,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -164,43 +170,77 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 移动端顶部导航 */}
-      <div className="md:hidden flex items-center justify-between bg-gray-900 text-white px-4 h-12">
+      <div className="md:hidden flex items-center justify-between bg-gray-900 text-white px-4 h-12 shrink-0">
         <button onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-1 rounded hover:bg-gray-700">
+          className="p-1.5 rounded-lg hover:bg-gray-700 active:bg-gray-600 transition-colors"
+          aria-label="菜单">
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
         <span className="text-sm font-medium">IT资产管理系统</span>
         <button onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-xs text-gray-400 hover:text-white px-2">
-          退出
+          className="p-1.5 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+          aria-label="退出登录">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
         </button>
       </div>
 
       {/* 移动端下拉菜单 */}
       {sidebarOpen && (
-        <div className="md:hidden bg-gray-800 text-white px-3 py-2 space-y-1 border-t border-gray-700">
-          {MOBILE_NAV.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-            return (
-              <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"}`}>
-                <span>{item.icon}</span>{item.label}
-              </Link>
-            );
-          })}
+        <div className="md:hidden bg-gray-800 text-white border-t border-gray-700 z-40">
+          <div className="px-3 py-2 space-y-1 max-h-[60vh] overflow-y-auto">
+            {NAV_GROUPS.map((group) => {
+              const visibleItems = group.items.filter(
+                item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types")
+              );
+              if (visibleItems.length === 0) return null;
+              return (
+                <div key={group.title} className="py-1">
+                  <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {group.title}
+                  </div>
+                  {visibleItems.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                    return (
+                      <Link key={item.href} href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                          isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+                        }`}>
+                        {item.icon}{item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* 移动端底部导航栏 */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="flex">
-          {MOBILE_NAV.filter(item => !isEmployee || (item.href !== "/org" && item.href !== "/assets/types")).map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
+        <div className="flex relative">
+          {MOBILE_NAV.filter(item => !isEmployee || !item.isMore).map((item) => {
+            const isActive = item.href !== "#" && (pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+            if (item.isMore) {
+              return (
+                <button key={item.href}
+                  onClick={() => setMoreOpen(!moreOpen)}
+                  className={`flex-1 flex flex-col items-center py-1.5 text-xs transition-colors ${
+                    moreOpen ? "text-blue-600" : "text-gray-500"
+                  }`}>
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="mt-0.5">{item.label}</span>
+                </button>
+              );
+            }
             return (
               <Link key={item.href} href={item.href}
-                className={`flex-1 flex flex-col items-center py-2 text-xs ${
+                className={`flex-1 flex flex-col items-center py-1.5 text-xs transition-colors ${
                   isActive ? "text-blue-600" : "text-gray-500"
                 }`}>
                 <span className="text-lg">{item.icon}</span>
@@ -208,6 +248,26 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          {/* 更多菜单弹出层 */}
+          {moreOpen && (
+            <div className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+              <div className="px-4 py-2">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-1">系统功能</div>
+                {MORE_MENU_ITEMS.filter(item => !isEmployee || !item.adminOnly).map((item) => {
+                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  return (
+                    <Link key={item.href} href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                        isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
+                      }`}>
+                      <span>{item.icon}</span>{item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

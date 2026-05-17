@@ -58,19 +58,19 @@ function AssetListContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">资产列表</h1>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">资产列表</h1>
         {!isEmployee && (
           <div className="flex gap-2">
             <Link
               href="/assets/import"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:px-4"
             >
               📥 批量导入
             </Link>
             <Link
               href="/assets/new"
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:px-4"
             >
               + 新增资产
             </Link>
@@ -78,13 +78,13 @@ function AssetListContent() {
         )}
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-3">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <input
           type="text"
           placeholder="搜索编号/名称/型号..."
           value={keyword}
           onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
-          className="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:w-64"
         />
         <select
           value={status}
@@ -114,7 +114,58 @@ function AssetListContent() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
+          {/* 移动端卡片列表 */}
+          <div className="md:hidden space-y-3">
+            {data.items.length === 0 ? (
+              <div className="rounded-lg border bg-white py-12 text-center text-gray-500 shadow-sm">
+                暂无资产数据
+              </div>
+            ) : (
+              data.items.map((asset) => {
+                const docCount = asset._count?.documents ?? 0;
+                return (
+                  <div key={asset.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                    <div className="mb-2 flex items-start justify-between">
+                      <Link href={`/assets/${asset.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                        {asset.name}
+                      </Link>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[asset.status]}`}>
+                        {STATUS_LABELS[asset.status]}
+                      </span>
+                    </div>
+                    <div className="mb-2 font-mono text-xs text-gray-500">{asset.assetNo}</div>
+                    <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600">
+                      <span>{asset.categoryGroup?.label || CATEGORY_LABELS[asset.category]}</span>
+                      <span className="text-gray-300">|</span>
+                      <span>{asset.assignedUser?.realName ?? "未分配"}</span>
+                      <span className="text-gray-300">|</span>
+                      <span>{asset.branch?.name ?? "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      {docCount > 0 ? (
+                        <Link href={`/assets/${asset.id}/documents`}
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          文档 {docCount}
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-gray-300">无文档</span>
+                      )}
+                      <Link href={`/assets/${asset.id}`}
+                        className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                        查看详情
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* 桌面端表格 */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-gray-600">
                 <tr>
@@ -187,7 +238,7 @@ function AssetListContent() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="rounded-md border px-3 py-1 text-sm disabled:opacity-30"
+                className="rounded-md border px-4 py-2 text-sm disabled:opacity-30 active:bg-gray-100"
               >
                 上一页
               </button>
@@ -197,7 +248,7 @@ function AssetListContent() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="rounded-md border px-3 py-1 text-sm disabled:opacity-30"
+                className="rounded-md border px-4 py-2 text-sm disabled:opacity-30 active:bg-gray-100"
               >
                 下一页
               </button>

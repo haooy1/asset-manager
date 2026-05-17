@@ -71,24 +71,24 @@ export default function AssetDetailPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <button onClick={() => router.back()} className="mb-2 text-sm text-gray-500 hover:text-gray-700">
             ← 返回列表
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">{asset.name}</h1>
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{asset.name}</h1>
           <span className="font-mono text-sm text-gray-500">{asset.assetNo}</span>
         </div>
-        <span className={`rounded-full px-3 py-1 text-sm font-medium ${STATUS_COLORS[asset.status]}`}>
+        <span className={`self-start rounded-full px-3 py-1 text-sm font-medium ${STATUS_COLORS[asset.status]}`}>
           {STATUS_LABELS[asset.status]}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-lg border bg-white p-6 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          <div className="rounded-lg border bg-white p-4 shadow-sm sm:p-6">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">基本信息</h2>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
+            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-gray-500">品类</dt>
                 <dd className="mt-1 text-gray-900">
