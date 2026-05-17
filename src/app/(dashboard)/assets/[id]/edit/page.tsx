@@ -244,7 +244,7 @@ export default function EditAssetPage() {
           <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
           <select value={value} onChange={e => handleFieldValueChange(field.id, e.target.value)}
             required={field.required}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
             <option value="">-- 请选择 --</option>
             {opts.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
@@ -258,7 +258,7 @@ export default function EditAssetPage() {
           <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
           <input type="date" value={value} onChange={e => handleFieldValueChange(field.id, e.target.value)}
             required={field.required}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
         </div>
       );
     }
@@ -269,7 +269,7 @@ export default function EditAssetPage() {
           <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
           <input type="number" step="any" value={value} onChange={e => handleFieldValueChange(field.id, e.target.value)}
             required={field.required}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
         </div>
       );
     }
@@ -280,7 +280,7 @@ export default function EditAssetPage() {
           <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
           <textarea value={value} onChange={e => handleFieldValueChange(field.id, e.target.value)}
             required={field.required} rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
         </div>
       );
     }
@@ -290,7 +290,7 @@ export default function EditAssetPage() {
         <label className="block text-sm font-medium text-gray-700">{field.label}{field.required ? " *" : ""}</label>
         <input value={value} onChange={e => handleFieldValueChange(field.id, e.target.value)}
           required={field.required}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
       </div>
     );
   };
@@ -302,7 +302,7 @@ export default function EditAssetPage() {
           <button onClick={() => router.back()} className="mb-2 text-sm text-gray-500 hover:text-gray-700">
             ← 返回
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">编辑资产</h1>
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">编辑资产</h1>
         </div>
       </div>
 
@@ -312,12 +312,12 @@ export default function EditAssetPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700">资产编号 *</label>
               <input name="assetNo" required value={form.assetNo} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">资产名称 *</label>
               <input name="name" required value={form.name} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
 
             {form.category !== "SECURITY_DOCUMENT" && (
@@ -325,12 +325,12 @@ export default function EditAssetPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">型号</label>
                   <input name="model" value={form.model} onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">品牌</label>
                   <input name="brand" value={form.brand} onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>
               </>
             )}
@@ -338,7 +338,7 @@ export default function EditAssetPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700">品类 *</label>
               <select name="category" required value={form.category} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                 {ASSET_CATEGORIES.map(c => (
                   <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
                 ))}
@@ -349,7 +349,7 @@ export default function EditAssetPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">选择自定义类型 *</label>
                 <select value={selectedCategoryGroupId} onChange={e => handleCustomTypeChange(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">-- 请选择 --</option>
                   {customGroups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
                 </select>
@@ -361,14 +361,14 @@ export default function EditAssetPage() {
                 {form.category === "SECURITY_DOCUMENT" ? "生效日期" : "购置日期"}
               </label>
               <input name="purchaseDate" type="date" value={form.purchaseDate} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 {form.category === "SECURITY_DOCUMENT" ? "到期日期" : "维保截止日"}
               </label>
               <input name="warrantyExpiry" type="date" value={form.warrantyExpiry} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
 
             {form.category !== "SECURITY_DOCUMENT" && (
@@ -376,13 +376,13 @@ export default function EditAssetPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">存放位置</label>
                   <input name="location" value={form.location} onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="如 3楼A区机房" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">设备价值 (元)</label>
                   <input name="value" type="number" step="0.01" value={form.value} onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>
               </>
             )}
@@ -390,7 +390,7 @@ export default function EditAssetPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700">状态</label>
               <select name="status" value={form.status} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="IDLE">闲置</option>
                 <option value="IN_USE">使用中</option>
                 <option value="MAINTENANCE">维保中</option>
@@ -419,7 +419,7 @@ export default function EditAssetPage() {
                 <label className="block text-sm font-medium text-gray-700">文件名称前缀</label>
                 <input value={uploadFileName}
                   onChange={e => setUploadFileName(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="留空则使用原始文件名" />
               </div>
               <div>
@@ -447,18 +447,18 @@ export default function EditAssetPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700">备注</label>
             <textarea name="description" value={form.description} onChange={handleChange} rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
           </div>
 
           {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
           <div className="flex gap-3">
             <button type="submit" disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer">
               {saving ? "保存中..." : "保存修改"}
             </button>
             <button type="button" onClick={() => router.back()}
-              className="rounded-md border px-4 py-2 text-sm">取消</button>
+              className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 px-4 py-2 text-sm transition-all duration-200 cursor-pointer">取消</button>
           </div>
         </form>
       </div>

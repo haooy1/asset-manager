@@ -131,13 +131,13 @@ export default function ApprovalListPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/approvals/${ap.id}`}
-                      className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
+                      className="rounded-md bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
                       查看详情
                     </Link>
                     {view === "my" && ap.status === "PENDING" && (
                       <button
                         onClick={() => handleCancel(ap.id)}
-                        className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-all duration-200 cursor-pointer"
+                        className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 transition-all duration-200 cursor-pointer"
                       >
                         撤销
                       </button>

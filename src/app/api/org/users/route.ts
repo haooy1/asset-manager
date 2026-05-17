@@ -1,5 +1,6 @@
 import { getUsers, createUser, updateUser, updateUserPassword, getUserById } from "@/modules/org/services";
-import { requireAuth, getCurrentUser } from "@/lib/auth/middleware";
+import { requireAuth, requireRole, getCurrentUser } from "@/lib/auth/middleware";
+import { USER_ROLES } from "@/modules/org/types";
 import { db } from "@/lib/db/client";
 import { compare } from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const authError = await requireAuth();
+    const authError = await requireRole("SUPER_ADMIN", "BRANCH_ADMIN");
     if (authError) return authError;
 
     const body = await request.json();
@@ -42,6 +43,20 @@ export async function POST(request: Request) {
     if (!username || !password || !realName || !role) {
       return NextResponse.json(
         { error: "VALIDATION_ERROR", message: "用户名、密码、姓名、角色为必填项" },
+        { status: 400 },
+      );
+    }
+
+    if (!USER_ROLES.includes(role as UserRole)) {
+      return NextResponse.json(
+        { error: "VALIDATION_ERROR", message: "无效的角色值" },
+        { status: 400 },
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "VALIDATION_ERROR", message: "密码长度不能少于6位" },
         { status: 400 },
       );
     }
@@ -105,8 +120,18 @@ export async function PUT(request: Request) {
       return NextResponse.json({ data: user });
     }
 
-    // 管理员可以修改更多信息
-    const user = await updateUser(id, data);
+    // 管理员可以修改更多信息（白名单过滤）
+    const adminAllowedFields = ["realName", "email", "role", "branchId", "departmentId", "isActive"];
+    const filteredData: Record<string, unknown> = {};
+    for (const key of adminAllowedFields) {
+      if (key in data) filteredData[key] = data[key];
+    }
+
+    if (filteredData.role && !USER_ROLES.includes(filteredData.role as UserRole)) {
+      return NextResponse.json({ error: "VALIDATION_ERROR", message: "无效的角色值" }, { status: 400 });
+    }
+
+    const user = await updateUser(id, filteredData);
     return NextResponse.json({ data: user });
   } catch (error) {
     console.error("更新用户失败:", error);
@@ -167,6 +192,18 @@ export async function PATCH(request: Request) {
       const isValid = await compare(oldPassword, user.password);
       if (!isValid) {
         return NextResponse.json({ error: "UNAUTHORIZED", message: "原密码不正确" }, { status: 401 });
+      }
+
+      if (oldPassword === newPassword) {
+        return NextResponse.json({ error: "VALIDATION_ERROR", message: "新密码不能与原密码相同" }, { status: 400 });
+      }
+    }
+
+    // 管理员重置密码时也需要检查新旧密码是否相同
+    if (isAdmin) {
+      const targetUser = await db.user.findUnique({ where: { id } });
+      if (targetUser && await compare(newPassword, targetUser.password)) {
+        return NextResponse.json({ error: "VALIDATION_ERROR", message: "新密码不能与原密码相同" }, { status: 400 });
       }
     }
 

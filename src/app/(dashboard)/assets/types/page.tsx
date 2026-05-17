@@ -242,7 +242,7 @@ export default function AssetTypesPage() {
     <div>
       <ConfirmDialog />
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">字段配置</h1>
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">字段配置</h1>
         {isAdmin && (
           <button onClick={() => setShowAddType(true)}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md transition-all duration-200 cursor-pointer">
@@ -252,7 +252,7 @@ export default function AssetTypesPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -394,7 +394,7 @@ export default function AssetTypesPage() {
                   确认创建
                 </button>
                 <button type="button" onClick={() => setShowAddType(false)}
-                  className="rounded-md border px-4 py-2 text-sm">取消</button>
+                  className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 px-4 py-2 text-sm transition-all duration-200 cursor-pointer">取消</button>
               </div>
             </form>
           </div>
@@ -455,7 +455,7 @@ export default function AssetTypesPage() {
                 </button>
                 <button type="button"
                   onClick={() => { setShowAddField(false); setShowEditField(null); }}
-                  className="rounded-md border px-4 py-2 text-sm">取消</button>
+                  className="rounded-md border border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 px-4 py-2 text-sm transition-all duration-200 cursor-pointer">取消</button>
               </div>
             </form>
           </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { requireRole } from "@/lib/auth/middleware";
+import { requireRole, requireAuth } from "@/lib/auth/middleware";
 
 /**
  * 获取单个设备类型详情
@@ -11,6 +11,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
     const { id } = await params;
     const group = await db.categoryGroup.findUnique({
       where: { id },

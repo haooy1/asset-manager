@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
 import { useDialog } from "@/shared/utils/dialogs";
+import { Download } from "lucide-react";
 
 function AssetListContent() {
   const router = useRouter();
@@ -203,7 +204,7 @@ function AssetListContent() {
               href="/assets/import"
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 sm:px-4 transition-all duration-200 cursor-pointer"
             >
-              📥 批量导入
+              <Download size={16} className="inline mr-1" />批量导入
             </Link>
             <Link
               href="/assets/new"
@@ -252,13 +253,13 @@ function AssetListContent() {
           <button
             onClick={handleBatchDelete}
             disabled={deleting}
-            className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-200 cursor-pointer"
+            className="rounded-md bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-200 cursor-pointer"
           >
             {deleting ? "删除中..." : "批量删除"}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+            className="rounded-md border border-gray-300 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
           >
             取消选择
           </button>
@@ -323,13 +324,13 @@ function AssetListContent() {
                       )}
                       <div className="flex gap-2">
                         <Link href={`/assets/${asset.id}`}
-                          className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
+                          className="rounded-md bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
                           查看
                         </Link>
                         {isEmployee && asset.status === "IDLE" && (
                           <button
                             onClick={() => handleBorrow(asset)}
-                            className="rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-100 transition-all duration-200 cursor-pointer">
+                            className="rounded-md bg-green-50 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-100 transition-all duration-200 cursor-pointer">
                             领用
                           </button>
                         )}
@@ -337,7 +338,7 @@ function AssetListContent() {
                           <button
                             onClick={() => handleDelete(asset)}
                             disabled={deleting}
-                            className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 transition-all duration-200 cursor-pointer"
+                            className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 transition-all duration-200 cursor-pointer"
                           >
                             删除
                           </button>

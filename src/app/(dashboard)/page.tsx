@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Package, CheckCircle, Wrench, AlertTriangle, FileText, Plus, Download, Users } from "lucide-react";
 
 interface Stats {
   total: number;
@@ -264,7 +265,8 @@ export default function DashboardPage() {
       value: c.count,
       color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
     }))
-    .filter((d) => d.value > 0);
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
 
   const maxCategory = Math.max(...categoryData.map((d) => d.value), 1);
 
@@ -286,7 +288,7 @@ export default function DashboardPage() {
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">首页概览</h1>
         <p className="mt-1 text-sm text-gray-500">
           欢迎回来，{session?.user?.name}。{urgentCount > 0 && (
-            <span className="ml-1 text-red-600 font-medium">⚠️ 有 {urgentCount} 项紧急提醒</span>
+            <span className="ml-1 text-red-600 font-medium inline-flex items-center gap-1"><AlertTriangle size={14} /> 有 {urgentCount} 项紧急提醒</span>
           )}
         </p>
       </div>
@@ -294,33 +296,33 @@ export default function DashboardPage() {
       {/* 统计卡片 - 所有角色可见 */}
       {perms.showStats && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link href="/assets" className="rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md">
+          <Link href="/assets" className="rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-lg">📦</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><Package size={18} /></div>
               <div className="text-xs text-gray-500">设备总数</div>
             </div>
             <div className="mt-2 text-2xl font-bold text-gray-900">{stats.total}</div>
             <div className="mt-0.5 text-xs text-gray-400">台设备已录入</div>
           </Link>
-          <Link href="/assets?status=IN_USE" className="rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md">
+          <Link href="/assets?status=IN_USE" className="rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-lg">✅</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-600"><CheckCircle size={18} /></div>
               <div className="text-xs text-gray-500">使用中</div>
             </div>
             <div className="mt-2 text-2xl font-bold text-blue-600">{stats.inUse}</div>
             <div className="mt-0.5 text-xs text-gray-400">使用率 {stats.total > 0 ? Math.round((stats.inUse / stats.total) * 100) : 0}%</div>
           </Link>
-          <Link href="/assets" className="rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md">
+          <Link href="/assets?status=MAINTENANCE" className="rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-50 text-lg">🔧</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-50 text-yellow-600"><Wrench size={18} /></div>
               <div className="text-xs text-gray-500">维修中</div>
             </div>
             <div className="mt-2 text-2xl font-bold text-yellow-600">{stats.maintenance}</div>
             <div className="mt-0.5 text-xs text-gray-400">待处理设备</div>
           </Link>
-          <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <div className="rounded-lg border bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-lg">⚠️</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600"><AlertTriangle size={18} /></div>
               <div className="text-xs text-gray-500">即将到期</div>
             </div>
             <div className="mt-2 text-2xl font-bold text-red-600">{stats.expiring + (perms.showDocReminder ? docItems.length : 0)}</div>
@@ -333,7 +335,7 @@ export default function DashboardPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* 状态分布环形图 - 所有角色可见 */}
         {perms.showStatusChart && (
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-lg border bg-white p-5 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold text-gray-900">资产状态分布</h2>
             <div className="flex flex-col items-center gap-4 sm:flex-row">
               <DonutChart data={statusData} size={140} strokeWidth={20} />
@@ -352,7 +354,7 @@ export default function DashboardPage() {
 
         {/* 品类分布柱状图 - 所有角色可见 */}
         {perms.showCategoryChart && (
-          <div className="rounded-xl border bg-white p-5 shadow-sm lg:col-span-2">
+          <div className="rounded-lg border bg-white p-5 shadow-sm lg:col-span-2">
             <h2 className="mb-4 text-sm font-semibold text-gray-900">资产品类分布</h2>
             {categoryData.length > 0 ? (
               <BarChart data={categoryData} maxValue={maxCategory} />
@@ -367,10 +369,10 @@ export default function DashboardPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 维保到期 - 所有角色可见 */}
         {perms.showWarrantyReminder && (
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-lg border bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🔧</span>
+                <Wrench size={18} className="text-yellow-600" />
                 <h2 className="text-sm font-semibold text-gray-900">维保到期提醒</h2>
                 {expiredWarranty.length > 0 && (
                   <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
@@ -422,17 +424,17 @@ export default function DashboardPage() {
                 ))}
               </ul>
             ) : expiredWarranty.length === 0 && (
-              <div className="py-6 text-center text-xs text-gray-400">暂无维保到期提醒 ✅</div>
+              <div className="py-6 text-center text-xs text-gray-400">暂无维保到期提醒</div>
             )}
           </div>
         )}
 
         {/* 证书/文档到期 - 仅管理员可见 */}
         {perms.showDocReminder && (
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="rounded-lg border bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">📄</span>
+                <FileText size={18} className="text-blue-600" />
                 <h2 className="text-sm font-semibold text-gray-900">安全文档到期</h2>
                 {expiredDocs.length > 0 && (
                   <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
@@ -480,7 +482,7 @@ export default function DashboardPage() {
                 ))}
               </ul>
             ) : expiredDocs.length === 0 && (
-              <div className="py-6 text-center text-xs text-gray-400">暂无文档到期提醒 ✅</div>
+              <div className="py-6 text-center text-xs text-gray-400">暂无文档到期提醒</div>
             )}
           </div>
         )}
@@ -489,29 +491,29 @@ export default function DashboardPage() {
       {/* 快捷入口 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {perms.showQuickAddAsset && (
-          <Link href="/assets/new" className="rounded-xl border bg-blue-50 p-4 shadow-sm transition-all duration-200 hover:bg-blue-100 hover:shadow-md cursor-pointer">
-            <div className="text-2xl mb-1">➕</div>
+          <Link href="/assets/new" className="rounded-lg border bg-blue-50 p-4 shadow-sm transition-all duration-200 hover:bg-blue-100 hover:shadow-md cursor-pointer">
+            <Plus size={24} className="mb-1 text-blue-600" />
             <div className="text-sm font-semibold text-blue-900">新增资产</div>
             <div className="mt-0.5 text-xs text-blue-600">录入新设备</div>
           </Link>
         )}
         {perms.showQuickImport && (
-          <Link href="/assets/import" className="rounded-xl border bg-purple-50 p-4 shadow-sm transition-all duration-200 hover:bg-purple-100 hover:shadow-md cursor-pointer">
-            <div className="text-2xl mb-1">📥</div>
+          <Link href="/assets/import" className="rounded-lg border bg-purple-50 p-4 shadow-sm transition-all duration-200 hover:bg-purple-100 hover:shadow-md cursor-pointer">
+            <Download size={24} className="mb-1 text-purple-600" />
             <div className="text-sm font-semibold text-purple-900">批量导入</div>
             <div className="mt-0.5 text-xs text-purple-600">Excel导入资产</div>
           </Link>
         )}
         {perms.showQuickApproval && (
-          <Link href="/approvals" className="rounded-xl border bg-green-50 p-4 shadow-sm transition-all duration-200 hover:bg-green-100 hover:shadow-md cursor-pointer">
-            <div className="text-2xl mb-1">✅</div>
+          <Link href="/approvals" className="rounded-lg border bg-green-50 p-4 shadow-sm transition-all duration-200 hover:bg-green-100 hover:shadow-md cursor-pointer">
+            <CheckCircle size={24} className="mb-1 text-green-600" />
             <div className="text-sm font-semibold text-green-900">审批管理</div>
             <div className="mt-0.5 text-xs text-green-600">查看待审批</div>
           </Link>
         )}
         {perms.showQuickOrg && (
-          <Link href="/org" className="rounded-xl border bg-orange-50 p-4 shadow-sm transition-all duration-200 hover:bg-orange-100 hover:shadow-md cursor-pointer">
-            <div className="text-2xl mb-1">👥</div>
+          <Link href="/org" className="rounded-lg border bg-orange-50 p-4 shadow-sm transition-all duration-200 hover:bg-orange-100 hover:shadow-md cursor-pointer">
+            <Users size={24} className="mb-1 text-orange-600" />
             <div className="text-sm font-semibold text-orange-900">组织管理</div>
             <div className="mt-0.5 text-xs text-orange-600">分支/部门/用户</div>
           </Link>

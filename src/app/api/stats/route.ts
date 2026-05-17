@@ -60,7 +60,9 @@ export async function GET() {
       maintenance,
       scrapped,
       expiring,
-      categoryDistribution: categoryDistribution.filter((c) => c.count > 0),
+      categoryDistribution: categoryDistribution
+        .filter((c) => c.count > 0)
+        .sort((a, b) => b.count - a.count),
     });
   } catch (error) {
     console.error("获取统计数据失败:", error);

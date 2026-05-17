@@ -16,3 +16,9 @@
   --color-red-500: #ef4444;
   --color-red-600: #dc2626;
 }
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

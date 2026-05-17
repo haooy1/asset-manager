@@ -117,14 +117,14 @@ export function useDialog() {
             {!isAlert && (
               <button
                 onClick={handleCancel}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 {dialog.cancelText}
               </button>
             )}
             <button
               onClick={handleConfirm}
-              className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition ${style.confirmBg}`}
+              className={`rounded-md px-4 py-2 text-sm font-medium text-white transition ${style.confirmBg}`}
             >
               {dialog.confirmText}
             </button>

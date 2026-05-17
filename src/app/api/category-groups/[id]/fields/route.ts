@@ -11,6 +11,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
     const { id } = await params;
     const group = await db.categoryGroup.findUnique({ where: { id } });
     if (!group) {

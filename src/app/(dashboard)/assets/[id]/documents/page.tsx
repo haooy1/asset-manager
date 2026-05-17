@@ -131,7 +131,7 @@ export default function AssetDocumentsPage() {
         <button onClick={() => router.back()} className="mb-2 text-sm text-gray-500 hover:text-gray-700">
           ← 返回
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">附件文档</h1>
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">附件文档</h1>
         {asset && (
           <p className="mt-1 text-sm text-gray-500">
             <Link href={`/assets/${id}`} className="hover:text-blue-600">{asset.assetNo}</Link>

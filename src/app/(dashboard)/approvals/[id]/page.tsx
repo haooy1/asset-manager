@@ -113,8 +113,8 @@ export default function ApprovalDetailPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold text-gray-900">{TYPE_LABELS[approval.type]}</h1>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{TYPE_LABELS[approval.type]}</h1>
               <span className={`rounded-full px-3 py-1 text-sm font-medium ${
                 approval.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
                 approval.status === "APPROVED" ? "bg-blue-100 text-blue-800" :
@@ -123,7 +123,7 @@ export default function ApprovalDetailPage() {
               }`}>{STATUS_LABELS[approval.status]}</span>
             </div>
 
-            <dl className="grid grid-cols-2 gap-4 text-sm">
+            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div><dt className="text-gray-500">申请人</dt><dd className="mt-1 font-medium text-gray-900">{approval.applicant?.realName}</dd></div>
               <div><dt className="text-gray-500">所属部门</dt><dd className="mt-1 text-gray-900">{approval.applicant?.department?.name ?? "-"}</dd></div>
               <div><dt className="text-gray-500">审批人</dt><dd className="mt-1 text-gray-900">{approval.approver?.realName ?? "-"}</dd></div>
@@ -141,7 +141,7 @@ export default function ApprovalDetailPage() {
 
           <div className="rounded-lg border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">关联资产</h2>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
+            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div><dt className="text-gray-500">资产编号</dt><dd className="mt-1 font-mono text-gray-900">{approval.asset.assetNo}</dd></div>
               <div><dt className="text-gray-500">资产名称</dt><dd className="mt-1 text-gray-900">{approval.asset.name}</dd></div>
               <div><dt className="text-gray-500">型号</dt><dd className="mt-1 text-gray-900">{approval.asset.model ?? "-"}</dd></div>

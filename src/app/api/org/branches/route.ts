@@ -1,5 +1,5 @@
 import { getBranches, createBranch, updateBranch } from "@/modules/org/services";
-import { requireAuth } from "@/lib/auth/middleware";
+import { requireAuth, requireRole } from "@/lib/auth/middleware";
 import { NextResponse } from "next/server";
 
 /**
@@ -29,7 +29,7 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    const authError = await requireAuth();
+    const authError = await requireRole("SUPER_ADMIN");
     if (authError) return authError;
 
     const body = await request.json();

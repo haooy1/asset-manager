@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { requireRole } from "@/lib/auth/middleware";
+import { requireRole, requireAuth } from "@/lib/auth/middleware";
 
 /**
  * 获取所有设备类型列表（内置 + 自定义）
@@ -8,6 +8,8 @@ import { requireRole } from "@/lib/auth/middleware";
  */
 export async function GET(_req: NextRequest) {
   try {
+    const authError = await requireAuth();
+    if (authError) return authError;
     const groups = await db.categoryGroup.findMany({
       orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
       include: {

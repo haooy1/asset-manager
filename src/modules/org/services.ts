@@ -119,6 +119,9 @@ export async function createUser(data: {
   branchId?: string;
   departmentId?: string;
 }) {
+  if (data.password.length < 6) {
+    throw new Error("密码长度不能少于6位");
+  }
   const hashedPassword = await hash(data.password, 12);
   return db.user.create({
     data: {

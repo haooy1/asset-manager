@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, } from "@/modules/assets/types";
+import { AlertTriangle, BookOpen } from "lucide-react";
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -131,7 +132,7 @@ export default function AssetDetailPage() {
                 <dt className="text-gray-500">{asset.category === "SECURITY_DOCUMENT" ? "到期日期" : "维保截止日"}</dt>
                 <dd className={`mt-1 ${asset.warrantyExpiry && new Date(asset.warrantyExpiry) < new Date() ? "text-red-600 font-medium" : "text-gray-900"}`}>
                   {asset.warrantyExpiry ? new Date(asset.warrantyExpiry).toLocaleDateString("zh-CN") : "-"}
-                  {asset.warrantyExpiry && new Date(asset.warrantyExpiry) < new Date() && " ⚠️ 已过期"}
+                  {asset.warrantyExpiry && new Date(asset.warrantyExpiry) < new Date() && <span className="inline-flex items-center gap-1 text-red-600 ml-1"><AlertTriangle size={14} />已过期</span>}
                 </dd>
               </div>
               <div>
@@ -148,7 +149,7 @@ export default function AssetDetailPage() {
           {asset.customFieldValues && asset.customFieldValues.length > 0 && (
             <div className="rounded-lg border bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-lg font-semibold text-gray-900">自定义字段</h2>
-              <dl className="grid grid-cols-2 gap-4 text-sm">
+              <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 {asset.customFieldValues.map((cfv) => (
                   <div key={cfv.id}>
                     <dt className="text-gray-500">{cfv.field?.label || cfv.fieldId}</dt>
@@ -223,7 +224,7 @@ export default function AssetDetailPage() {
                   onClick={() => router.push(`/category-groups/${asset.categoryGroupId}/documents`)}
                   className="block w-full rounded-md border px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  📖 管理共享手册
+                  <BookOpen size={16} className="inline mr-1" />管理共享手册
                 </button>
               )}
               {asset.status === "IDLE" && (

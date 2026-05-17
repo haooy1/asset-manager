@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 
 interface AuditLogItem {
   id: string;
@@ -136,10 +137,10 @@ export default function AuditLogsPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-gray-900">操作日志</h1>
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">操作日志</h1>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -172,13 +173,13 @@ export default function AuditLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-48 rounded-l-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full sm:w-48 rounded-l-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               onClick={handleSearch}
               className="rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
             >
-              🔍
+              <Search size={16} />
             </button>
           </div>
           {search && (
@@ -198,7 +199,44 @@ export default function AuditLogsPage() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
+          {/* 移动端卡片视图 */}
+          <div className="md:hidden space-y-3">
+            {items.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">暂无日志记录</div>
+            ) : (
+              items.map((log) => (
+                <div key={log.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">
+                      {log.user?.realName || log.username || "-"}
+                    </span>
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${ACTION_COLORS[log.action] || "bg-gray-50 text-gray-600"}`}>
+                      {ACTION_LABELS[log.action] || log.action}
+                    </span>
+                  </div>
+                  {activeTab !== "login" && log.targetType && (
+                    <div className="mb-1 text-xs text-gray-500">
+                      目标：{TARGET_LABELS[log.targetType] || log.targetType}
+                    </div>
+                  )}
+                  {activeTab === "login" && log.clientIp && (
+                    <div className="mb-1 text-xs text-gray-500">
+                      IP：<span className="font-mono">{log.clientIp}</span>
+                    </div>
+                  )}
+                  {log.detail && (
+                    <div className="mb-2 text-xs text-gray-600 truncate">{log.detail}</div>
+                  )}
+                  <div className="text-xs text-gray-400">
+                    {new Date(log.createdAt).toLocaleString("zh-CN")}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 桌面端表格视图 */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border bg-white shadow-sm">
             {activeTab === "login" ? (
               <table className="w-full text-left text-sm">
                 <thead className="border-b bg-gray-50 text-gray-600">
@@ -213,7 +251,7 @@ export default function AuditLogsPage() {
                 <tbody className="divide-y">
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-16 text-center text-gray-400">暂无日志记录</td>
+                      <td colSpan={5} className="px-4 py-12 text-center text-gray-500">暂无日志记录</td>
                     </tr>
                   ) : (
                     items.map((log) => (
@@ -256,7 +294,7 @@ export default function AuditLogsPage() {
                 <tbody className="divide-y">
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-16 text-center text-gray-400">暂无日志记录</td>
+                      <td colSpan={5} className="px-4 py-12 text-center text-gray-500">暂无日志记录</td>
                     </tr>
                   ) : (
                     items.map((log) => (
@@ -291,10 +329,10 @@ export default function AuditLogsPage() {
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-center gap-2">
               <button disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">上一页</button>
+                className="rounded border px-3 py-2 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">上一页</button>
               <span className="text-sm text-gray-500">{page} / {totalPages}</span>
               <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">下一页</button>
+                className="rounded border px-3 py-2 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">下一页</button>
             </div>
           )}
         </>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { USER_ROLES, ROLE_LABELS } from "@/modules/org/types";
+import { Eye, EyeOff } from "lucide-react";
 
 interface BranchInfo {
   id: string;
@@ -76,6 +77,9 @@ export default function OrgPage() {
     oldPassword: "", newPassword: "", confirmPassword: "",
   });
   const [editLoading, setEditLoading] = useState(false);
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   const currentUserRole = session?.user?.role;
   const isAdmin = ["SUPER_ADMIN", "BRANCH_ADMIN", "DEPT_MANAGER"].includes(currentUserRole ?? "");
@@ -244,7 +248,7 @@ export default function OrgPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">组织管理</h1>
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">组织管理</h1>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 overflow-x-auto border-b pb-px">
@@ -277,16 +281,16 @@ export default function OrgPage() {
           <form onSubmit={handleSubmit} className="space-y-3">
             {form.formType === "branch" && (
               <>
-                <input placeholder="分支名称 *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
-                <input placeholder="分支编码 *" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
-                <input placeholder="地址" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
-                <input placeholder="联系方式" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <input placeholder="分支名称 *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input placeholder="分支编码 *" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input placeholder="地址" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input placeholder="联系方式" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </>
             )}
             {form.formType === "department" && (
               <>
-                <input placeholder="部门名称 *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
-                <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} required className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <input placeholder="部门名称 *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <select value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })} required className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">选择所属分支 *</option>
                   {branches.map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
                 </select>
@@ -308,26 +312,26 @@ export default function OrgPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">真实姓名</label>
               <input value={editForm.realName} onChange={(e) => setEditForm({ ...editForm, realName: e.target.value })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">邮箱</label>
               <input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             {isAdmin && (
               <>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">角色</label>
                   <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     {USER_ROLES.map((r) => (<option key={r} value={r}>{ROLE_LABELS[r]}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">所属分支</label>
                   <select value={editForm.branchId} onChange={(e) => setEditForm({ ...editForm, branchId: e.target.value })}
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <option value="">无</option>
                     {branches.map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
                   </select>
@@ -335,7 +339,7 @@ export default function OrgPage() {
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">所属部门</label>
                   <select value={editForm.departmentId} onChange={(e) => setEditForm({ ...editForm, departmentId: e.target.value })}
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <option value="">无</option>
                     {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
                   </select>
@@ -350,7 +354,7 @@ export default function OrgPage() {
             <div className="flex gap-2 pt-2">
               <button onClick={handleEditSave} disabled={editLoading}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer">{editLoading ? "保存中..." : "保存"}</button>
-              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
+              <button onClick={() => { setEditingUser(null); setEditMode(null); setShowOldPwd(false); setShowNewPwd(false); setShowConfirmPwd(false); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
             </div>
           </div>
         </div>
@@ -367,24 +371,39 @@ export default function OrgPage() {
             {(!isAdmin || session?.user?.id === editingUser.id) && (
               <div>
                 <label className="block text-xs text-gray-500 mb-1">原密码 *</label>
-                <input type="password" value={passwordForm.oldPassword} onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
-                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <div className="relative">
+                  <input type={showOldPwd ? "text" : "password"} value={passwordForm.oldPassword} onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                    {showOldPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             )}
             <div>
               <label className="block text-xs text-gray-500 mb-1">新密码 *</label>
-              <input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <div className="relative">
+                <input type={showNewPwd ? "text" : "password"} value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                  {showNewPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">确认新密码 *</label>
-              <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <div className="relative">
+                <input type={showConfirmPwd ? "text" : "password"} value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                  {showConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="flex gap-2 pt-2">
               <button onClick={handlePasswordSave} disabled={editLoading}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer">{editLoading ? "保存中..." : "保存"}</button>
-              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
+              <button onClick={() => { setEditingUser(null); setEditMode(null); setShowOldPwd(false); setShowNewPwd(false); setShowConfirmPwd(false); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
             </div>
           </div>
         </div>
@@ -393,23 +412,87 @@ export default function OrgPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
+        <>
+          {/* 移动端卡片视图 */}
+          <div className="md:hidden space-y-3">
+            {tab === "branches" && (branches.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">暂无分支数据</div>
+            ) : branches.map((b) => (
+              <div key={b.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-900">{b.name}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${b.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{b.isActive ? "启用" : "停用"}</span>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>编码：<span className="font-mono">{b.code}</span></div>
+                  {b.address && <div>地址：{b.address}</div>}
+                  <div className="flex gap-4">
+                    <span>部门：{b._count?.departments ?? 0}</span>
+                    <span>用户：{b._count?.users ?? 0}</span>
+                  </div>
+                </div>
+              </div>
+            )))}
+
+            {tab === "departments" && (departments.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">暂无部门数据</div>
+            ) : departments.map((d) => (
+              <div key={d.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-900">{d.name}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${d.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{d.isActive ? "启用" : "停用"}</span>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div>所属分支：{d.branch?.name ?? "-"}</div>
+                  <div>用户数：{d._count?.users ?? 0}</div>
+                </div>
+              </div>
+            )))}
+
+            {tab === "users" && (users.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">暂无用户数据</div>
+            ) : users.map((u) => (
+              <div key={u.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-900">{u.realName}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${u.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{u.isActive ? "启用" : "停用"}</span>
+                </div>
+                <div className="space-y-1 text-xs text-gray-600 mb-3">
+                  <div>用户名：{u.username}</div>
+                  <div>角色：<span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800">{ROLE_LABELS[u.role as keyof typeof ROLE_LABELS] ?? u.role}</span></div>
+                  <div>分支：{u.branch?.name ?? "-"}</div>
+                  <div>部门：{u.department?.name ?? "-"}</div>
+                </div>
+                {(isAdmin || session?.user?.id === u.id) && (
+                  <div className="flex gap-2 pt-2 border-t">
+                    <button onClick={() => openEdit(u, "info")} className="rounded-md bg-blue-50 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">编辑</button>
+                    <button onClick={() => openEdit(u, "password")} className="rounded-md bg-gray-50 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer">
+                      {isAdmin && session?.user?.id !== u.id ? "重置密码" : "修改密码"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )))}
+          </div>
+
+          {/* 桌面端表格视图 */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50 text-gray-600">
               {tab === "branches" && (
                 <tr>
-                  <th className="px-4 py-3">分支名称</th><th className="px-4 py-3">编码</th><th className="px-4 py-3">地址</th><th className="px-4 py-3">部门数</th><th className="px-4 py-3">用户数</th><th className="px-4 py-3">状态</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">分支名称</th><th className="px-4 py-3 font-medium text-gray-600">编码</th><th className="px-4 py-3 font-medium text-gray-600">地址</th><th className="px-4 py-3 font-medium text-gray-600">部门数</th><th className="px-4 py-3 font-medium text-gray-600">用户数</th><th className="px-4 py-3 font-medium text-gray-600">状态</th>
                 </tr>
               )}
               {tab === "departments" && (
                 <tr>
-                  <th className="px-4 py-3">部门名称</th><th className="px-4 py-3">所属分支</th><th className="px-4 py-3">用户数</th><th className="px-4 py-3">状态</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">部门名称</th><th className="px-4 py-3 font-medium text-gray-600">所属分支</th><th className="px-4 py-3 font-medium text-gray-600">用户数</th><th className="px-4 py-3 font-medium text-gray-600">状态</th>
                 </tr>
               )}
               {tab === "users" && (
                 <tr>
-                  <th className="px-4 py-3">用户名</th><th className="px-4 py-3">姓名</th><th className="px-4 py-3">角色</th>
-                  <th className="px-4 py-3">所属分支</th><th className="px-4 py-3">所属部门</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">操作</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">用户名</th><th className="px-4 py-3 font-medium text-gray-600">姓名</th><th className="px-4 py-3 font-medium text-gray-600">角色</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">所属分支</th><th className="px-4 py-3 font-medium text-gray-600">所属部门</th><th className="px-4 py-3 font-medium text-gray-600">状态</th><th className="px-4 py-3 font-medium text-gray-600">操作</th>
                 </tr>
               )}
             </thead>
@@ -449,9 +532,9 @@ export default function OrgPage() {
                       {/* 管理员可编辑所有用户，普通用户只能编辑自己 */}
                       {(isAdmin || session?.user?.id === u.id) && (
                         <>
-                          <button onClick={() => openEdit(u, "info")} className="text-xs text-blue-600 hover:underline transition-all duration-200 cursor-pointer">编辑</button>
+                          <button onClick={() => openEdit(u, "info")} className="rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">编辑</button>
                           <span className="text-gray-300">|</span>
-                          <button onClick={() => openEdit(u, "password")} className="text-xs text-blue-600 hover:underline transition-all duration-200 cursor-pointer">
+                          <button onClick={() => openEdit(u, "password")} className="rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
                             {isAdmin && session?.user?.id !== u.id ? "重置密码" : "修改密码"}
                           </button>
                         </>
@@ -463,6 +546,7 @@ export default function OrgPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

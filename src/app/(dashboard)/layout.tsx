@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Home, Package, CheckCircle, MoreHorizontal, User, Users, Settings, ClipboardList } from "lucide-react";
 
 const NAV_GROUPS = [
   {
@@ -91,17 +92,17 @@ const NAV_GROUPS = [
 ];
 
 const MOBILE_NAV = [
-  { label: "首页", href: "/", icon: "🏠" },
-  { label: "资产", href: "/assets", icon: "📦" },
-  { label: "审批", href: "/approvals", icon: "✅" },
-  { label: "更多", href: "#", icon: "☰", isMore: true },
+  { label: "首页", href: "/", icon: <Home size={22} /> },
+  { label: "资产", href: "/assets", icon: <Package size={22} /> },
+  { label: "审批", href: "/approvals", icon: <CheckCircle size={22} /> },
+  { label: "更多", href: "#", icon: <MoreHorizontal size={22} />, isMore: true },
 ];
 
 const MORE_MENU_ITEMS = [
-  { label: "个人设置", href: "/profile", icon: "👤" },
-  { label: "组织管理", href: "/org", icon: "👥" },
-  { label: "字段配置", href: "/assets/types", icon: "⚙️" },
-  { label: "操作日志", href: "/audit-logs", icon: "📋", adminOnly: true },
+  { label: "个人设置", href: "/profile", icon: <User size={18} /> },
+  { label: "组织管理", href: "/org", icon: <Users size={18} /> },
+  { label: "字段配置", href: "/assets/types", icon: <Settings size={18} /> },
+  { label: "操作日志", href: "/audit-logs", icon: <ClipboardList size={18} />, adminOnly: true },
 ];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -240,20 +241,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               return (
                 <button key={item.href}
                   onClick={() => setMoreOpen(!moreOpen)}
-                  className={`flex-1 flex flex-col items-center py-1.5 text-xs transition-colors ${
+                  className={`flex-1 flex flex-col items-center py-2 text-xs transition-colors ${
                     moreOpen ? "text-blue-600" : "text-gray-500"
                   }`}>
-                  <span className="text-lg">{item.icon}</span>
+                  <span className="text-current">{item.icon}</span>
                   <span className="mt-0.5">{item.label}</span>
                 </button>
               );
             }
             return (
               <Link key={item.href} href={item.href}
-                className={`flex-1 flex flex-col items-center py-1.5 text-xs transition-colors ${
+                className={`flex-1 flex flex-col items-center py-2 text-xs transition-colors ${
                   isActive ? "text-blue-600" : "text-gray-500"
                 }`}>
-                <span className="text-lg">{item.icon}</span>
+                <span className="text-current">{item.icon}</span>
                 <span className="mt-0.5">{item.label}</span>
               </Link>
             );
@@ -271,7 +272,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                       className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-200 cursor-pointer ${
                         isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
                       }`}>
-                      <span>{item.icon}</span>{item.label}
+                      <span className="text-current">{item.icon}</span>{item.label}
                     </Link>
                   );
                 })}
@@ -282,7 +283,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* 主内容区域 */}
-      <main className="flex-1 overflow-auto bg-gray-50 pb-16 md:pb-0">
+      <main className="flex-1 overflow-auto bg-gray-50 pb-20 md:pb-0">
         <div className="p-4 md:p-6">{children}</div>
       </main>
     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useDialog } from "@/shared/utils/dialogs";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -17,6 +18,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   // 重定向未登录用户
   useEffect(() => {
@@ -93,11 +97,11 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">个人设置</h1>
+    <div>
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">个人设置</h1>
 
       {/* 用户信息卡片 */}
-      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
+      <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">基本信息</h2>
         <div className="space-y-3 text-sm text-gray-600">
           <div className="flex items-center gap-2">
@@ -121,44 +125,59 @@ export default function ProfilePage() {
       </div>
 
       {/* 修改密码 */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className="rounded-lg border bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">修改密码</h2>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">原密码</label>
-            <input
-              type="password"
-              value={passwordForm.oldPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="请输入原密码"
-            />
+            <div className="relative">
+              <input
+                type={showOldPwd ? "text" : "password"}
+                value={passwordForm.oldPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="请输入原密码"
+              />
+              <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showOldPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">新密码</label>
-            <input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="请输入新密码（至少6位）"
-            />
+            <div className="relative">
+              <input
+                type={showNewPwd ? "text" : "password"}
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="请输入新密码（至少6位）"
+              />
+              <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showNewPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">确认新密码</label>
-            <input
-              type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="请再次输入新密码"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPwd ? "text" : "password"}
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="请再次输入新密码"
+              />
+              <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                {showConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+            <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
           )}
           {success && (
-            <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">{success}</div>
+            <div className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{success}</div>
           )}
           <button
             type="submit"

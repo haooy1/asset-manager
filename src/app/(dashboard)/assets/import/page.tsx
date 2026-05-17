@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useDialog } from "@/shared/utils/dialogs";
+import { Download, CheckCircle, XCircle } from "lucide-react";
 
 interface CategoryGroup {
   id: string;
@@ -194,7 +195,7 @@ export default function ImportPage() {
         >
           ← 返回
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">批量导入资产</h1>
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">批量导入资产</h1>
       </div>
 
       <div className="space-y-6">
@@ -236,7 +237,7 @@ export default function ImportPage() {
           </ol>
           <button onClick={handleDownloadTemplate}
             className="mt-4 rounded-md border border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
-            📥 下载 Excel 模板
+            <Download size={16} className="inline mr-1" />下载 Excel 模板
           </button>
         </div>
 
@@ -273,7 +274,7 @@ export default function ImportPage() {
             {/* 有效数据预览 */}
             {preview.validRows.length > 0 && (
               <div className="mb-4">
-                <h3 className="mb-2 text-sm font-medium text-green-700">✅ 有效数据（前 {preview.validRows.length} 行）</h3>
+                <h3 className="mb-2 text-sm font-medium text-green-700 inline-flex items-center gap-1"><CheckCircle size={14} />有效数据（前 {preview.validRows.length} 行）</h3>
                 <div className="overflow-x-auto rounded-md border">
                   <table className="min-w-full text-xs">
                     <thead className="bg-gray-50">
@@ -307,7 +308,7 @@ export default function ImportPage() {
             {/* 无效数据 */}
             {preview.invalidRows.length > 0 && (
               <div className="mb-4">
-                <h3 className="mb-2 text-sm font-medium text-red-700">❌ 无效数据（前 {preview.invalidRows.length} 行）</h3>
+                <h3 className="mb-2 text-sm font-medium text-red-700 inline-flex items-center gap-1"><XCircle size={14} />无效数据（前 {preview.invalidRows.length} 行）</h3>
                 <ul className="max-h-48 overflow-auto rounded-md border bg-red-50 p-3 text-xs text-red-700 space-y-1">
                   {preview.invalidRows.map((item, i) => (
                     <li key={i}>
@@ -326,7 +327,7 @@ export default function ImportPage() {
               <button
                 onClick={handleConfirm}
                 disabled={confirming || preview.validCount === 0}
-                className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300 transition-all duration-200 cursor-pointer"
+                className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer"
               >
                 {confirming ? "导入中..." : `确认导入 (${preview.validCount} 条)`}
               </button>
@@ -365,7 +366,7 @@ export default function ImportPage() {
               <button
                 onClick={handleRevoke}
                 disabled={revoking || result.success === 0}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300 transition-all duration-200 cursor-pointer"
+                className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-200 cursor-pointer"
               >
                 {revoking ? "撤销中..." : "撤销本次导入"}
               </button>
