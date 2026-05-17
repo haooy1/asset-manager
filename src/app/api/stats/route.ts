@@ -35,7 +35,7 @@ export async function GET() {
         },
       }),
       db.categoryGroup.findMany({
-        select: { id: true, name: true, code: true },
+        select: { id: true, name: true, label: true },
       }),
     ]);
 
@@ -46,8 +46,8 @@ export async function GET() {
           where: { categoryGroupId: cg.id },
         });
         return {
-          category: cg.code,
-          label: cg.name,
+          category: cg.name,
+          label: cg.label,
           count,
         };
       }),
