@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, type AssetStatus, type AssetCategory, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
+import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
 
 function AssetListContent() {
   const router = useRouter();
@@ -17,8 +17,11 @@ function AssetListContent() {
   const [status, setStatus] = useState(searchParams.get("status") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const isEmployee = session?.user?.role === "EMPLOYEE";
+  const isAdmin = !isEmployee;
 
   /**
    * 获取资产列表数据（支持关键词、状态、品类筛选及分页）
@@ -42,7 +45,9 @@ function AssetListContent() {
         } catch {}
         console.error(msg);
       } else {
-        setData(await res.json());
+        const result = await res.json();
+        setData(result);
+        setSelectedIds(new Set());
       }
     } catch {
       // ignore
@@ -55,6 +60,89 @@ function AssetListContent() {
   }, [fetchData]);
 
   const totalPages = Math.ceil(data.total / 20);
+
+  /**
+   * 切换单条资产选中状态
+   */
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  /**
+   * 切换全选/取消全选
+   */
+  const toggleSelectAll = () => {
+    if (selectedIds.size === data.items.length && data.items.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(data.items.map((item) => item.id)));
+    }
+  };
+
+  /**
+   * 删除单条资产（二次确认）
+   */
+  const handleDelete = async (asset: AssetInfo) => {
+    if (!confirm(`确定要删除资产「${asset.name}」(${asset.assetNo}) 吗？此操作不可恢复。`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/assets/${asset.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "删除失败");
+      } else {
+        fetchData();
+      }
+    } catch {
+      alert("网络错误，请重试");
+    }
+    setDeleting(false);
+  };
+
+  /**
+   * 批量删除选中资产（二次确认）
+   */
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const names = data.items
+      .filter((item) => selectedIds.has(item.id))
+      .map((item) => item.name)
+      .slice(0, 5);
+    const more = selectedIds.size > 5 ? ` 等共 ${selectedIds.size} 条资产` : ` 共 ${selectedIds.size} 条资产`;
+    if (!confirm(`确定要删除以下资产吗？此操作不可恢复。\n\n${names.join("、")}${more}`)) return;
+
+    setDeleting(true);
+    let success = 0;
+    let failed = 0;
+
+    for (const id of selectedIds) {
+      try {
+        const res = await fetch(`/api/assets/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          success++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    if (failed > 0) {
+      alert(`删除完成：成功 ${success} 条，失败 ${failed} 条`);
+    }
+    setSelectedIds(new Set());
+    fetchData();
+    setDeleting(false);
+  };
 
   return (
     <div>
@@ -108,6 +196,26 @@ function AssetListContent() {
         </select>
       </div>
 
+      {/* 批量操作栏 */}
+      {isAdmin && selectedIds.size > 0 && (
+        <div className="mb-3 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-2 text-sm">
+          <span className="text-blue-800">已选择 <span className="font-bold">{selectedIds.size}</span> 条资产</span>
+          <button
+            onClick={handleBatchDelete}
+            disabled={deleting}
+            className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {deleting ? "删除中..." : "批量删除"}
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+          >
+            取消选择
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
@@ -123,12 +231,23 @@ function AssetListContent() {
             ) : (
               data.items.map((asset) => {
                 const docCount = asset._count?.documents ?? 0;
+                const isSelected = selectedIds.has(asset.id);
                 return (
-                  <div key={asset.id} className="rounded-lg border bg-white p-4 shadow-sm">
+                  <div key={asset.id} className={`rounded-lg border bg-white p-4 shadow-sm ${isSelected ? "ring-2 ring-blue-300" : ""}`}>
                     <div className="mb-2 flex items-start justify-between">
-                      <Link href={`/assets/${asset.id}`} className="font-medium text-gray-900 hover:text-blue-600">
-                        {asset.name}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(asset.id)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        )}
+                        <Link href={`/assets/${asset.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                          {asset.name}
+                        </Link>
+                      </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[asset.status]}`}>
                         {STATUS_LABELS[asset.status]}
                       </span>
@@ -153,10 +272,21 @@ function AssetListContent() {
                       ) : (
                         <span className="text-xs text-gray-300">无文档</span>
                       )}
-                      <Link href={`/assets/${asset.id}`}
-                        className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
-                        查看详情
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link href={`/assets/${asset.id}`}
+                          className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                          查看
+                        </Link>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(asset)}
+                            disabled={deleting}
+                            className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -169,6 +299,16 @@ function AssetListContent() {
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-gray-600">
                 <tr>
+                  {isAdmin && (
+                    <th className="px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={data.items.length > 0 && selectedIds.size === data.items.length}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-medium">资产编号</th>
                   <th className="px-4 py-3 font-medium">名称</th>
                   <th className="px-4 py-3 font-medium">品类</th>
@@ -182,15 +322,26 @@ function AssetListContent() {
               <tbody className="divide-y">
                 {data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={isAdmin ? 9 : 8} className="px-4 py-12 text-center text-gray-500">
                       暂无资产数据
                     </td>
                   </tr>
                 ) : (
                   data.items.map((asset) => {
                     const docCount = asset._count?.documents ?? 0;
+                    const isSelected = selectedIds.has(asset.id);
                     return (
-                    <tr key={asset.id} className="hover:bg-gray-50">
+                    <tr key={asset.id} className={`hover:bg-gray-50 ${isSelected ? "bg-blue-50" : ""}`}>
+                      {isAdmin && (
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(asset.id)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3 font-mono text-xs text-gray-500">{asset.assetNo}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">
                         <Link href={`/assets/${asset.id}`} className="hover:text-blue-600">
@@ -221,9 +372,23 @@ function AssetListContent() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs">
-                          查看
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs">
+                            查看
+                          </Link>
+                          {isAdmin && (
+                            <>
+                              <span className="text-gray-300">|</span>
+                              <button
+                                onClick={() => handleDelete(asset)}
+                                disabled={deleting}
+                                className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                              >
+                                删除
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     );
