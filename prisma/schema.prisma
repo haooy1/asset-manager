@@ -115,6 +115,9 @@ model Asset {
   categoryGroupId String?          @db.Uuid
   categoryGroup   CategoryGroup?   @relation(fields: [categoryGroupId], references: [id], onDelete: SetNull)
 
+  importBatchId   String?          @db.Uuid
+  importBatch     ImportBatch?     @relation("ImportBatchAssets", fields: [importBatchId], references: [id], onDelete: SetNull)
+
   documents          AssetDocument[]
   approvals          Approval[]
   customFieldValues  CustomFieldValue[]
@@ -302,4 +305,34 @@ model CustomFieldValue {
   updatedAt DateTime    @updatedAt
 
   @@unique([assetId, fieldId])
+}
+
+// ==================== 导入批次管理 ====================
+
+enum ImportBatchStatus {
+  PENDING
+  COMPLETED
+  REVOKED
+}
+
+model ImportBatch {
+  id              String            @id @default(uuid()) @db.Uuid
+  status          ImportBatchStatus @default(PENDING)
+  totalRows       Int               @default(0)
+  validRows       Int               @default(0)
+  invalidRows     Int               @default(0)
+  successCount    Int?              @default(0)
+  failedCount     Int?              @default(0)
+  previewData     String?           @db.Text
+  resultData      String?           @db.Text
+  categoryGroupId String?           @db.Uuid
+  branchId        String?           @db.Uuid
+  createdBy       String?           @db.Uuid
+  createdAt       DateTime          @default(now())
+  completedAt     DateTime?         @db.Timestamptz()
+  revokedAt       DateTime?         @db.Timestamptz()
+
+  assets Asset[] @relation("ImportBatchAssets")
+
+  @@map("import_batches")
 }

@@ -28,6 +28,11 @@ interface ImportResult {
   errors: ImportError[];
 }
 
+interface PreviewResult {
+  validRows: ImportRow[];
+  invalidRows: { row: number; data: ImportRow; error: string }[];
+}
+
 interface CustomFieldDef {
   id: string;
   name: string;
@@ -145,6 +150,54 @@ async function getCustomFields(categoryGroupId?: string): Promise<CustomFieldDef
     orderBy: { sortOrder: "asc" },
   });
   return fields;
+}
+
+/**
+ * 预览导入数据，验证并分类有效/无效行
+ * @param rows - 解析后的行数据数组
+ * @param customFields - 自定义字段定义列表
+ * @param categoryGroupId - 设备类型 ID
+ * @param branchId - 当前用户所属分支 ID
+ * @returns 预览结果（有效行和无效行）
+ */
+export async function previewImport(
+  rows: ImportRow[],
+  customFields: CustomFieldDef[],
+  categoryGroupId?: string,
+  branchId?: string,
+): Promise<PreviewResult> {
+  const validRows: ImportRow[] = [];
+  const invalidRows: { row: number; data: ImportRow; error: string }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNumber = i + 2;
+
+    const validationError = validateRow(row, lineNumber, customFields);
+    if (validationError) {
+      invalidRows.push({ row: lineNumber, data: row, error: validationError });
+      continue;
+    }
+
+    // 检查资产编号是否已存在
+    try {
+      const existing = await db.asset.findUnique({ where: { assetNo: row.assetNo } });
+      if (existing) {
+        invalidRows.push({
+          row: lineNumber,
+          data: row,
+          error: `第 ${lineNumber} 行: 资产编号 "${row.assetNo}" 已存在`,
+        });
+        continue;
+      }
+    } catch {
+      // 查询失败时继续
+    }
+
+    validRows.push(row);
+  }
+
+  return { validRows, invalidRows };
 }
 
 /**
@@ -303,6 +356,7 @@ export function isExcelFile(filename: string): boolean {
  * @param categoryGroupId - 设备类型 ID，用于关联自定义字段
  * @param branchId - 当前用户所属分支 ID
  * @param createdBy - 当前用户 ID
+ * @param importBatchId - 导入批次 ID
  * @returns 导入结果（总数、成功数、失败数、错误详情）
  */
 export async function importAssets(
@@ -310,6 +364,7 @@ export async function importAssets(
   categoryGroupId?: string,
   branchId?: string,
   createdBy?: string,
+  importBatchId?: string,
 ): Promise<ImportResult> {
   const errors: ImportError[] = [];
   let success = 0;
@@ -354,6 +409,7 @@ export async function importAssets(
       if (branchId) data.branchId = branchId;
       if (createdBy) data.createdBy = createdBy;
       if (categoryGroupId) data.categoryGroupId = categoryGroupId;
+      if (importBatchId) data.importBatchId = importBatchId;
 
       const asset = await db.asset.create({ data: data as never });
 
