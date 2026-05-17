@@ -12,6 +12,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category") as LogCategory | null;
+    const search = searchParams.get("search") ?? undefined;
+    const searchMode = searchParams.get("searchMode") ?? "fuzzy";
     const result = await getAuditLogs({
       userId: searchParams.get("userId") ?? undefined,
       action: searchParams.get("action") ?? undefined,
@@ -19,6 +21,8 @@ export async function GET(request: Request) {
       category: category && ["login", "user", "admin"].includes(category) ? category : undefined,
       page: Number(searchParams.get("page")) || 1,
       pageSize: Number(searchParams.get("pageSize")) || 50,
+      search,
+      searchMode: searchMode as "fuzzy" | "exact",
     });
     return NextResponse.json(result);
   } catch (error) {

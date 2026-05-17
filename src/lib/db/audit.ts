@@ -56,14 +56,33 @@ export async function getAuditLogs(params: {
   category?: LogCategory;
   page?: number;
   pageSize?: number;
+  search?: string;
+  searchMode?: "fuzzy" | "exact";
 }) {
-  const { userId, action, targetType, category, page = 1, pageSize = 50 } = params;
+  const { userId, action, targetType, category, page = 1, pageSize = 50, search, searchMode = "fuzzy" } = params;
   const where: Record<string, unknown> = {};
   if (userId) where.userId = userId;
   if (action) where.action = action;
   if (targetType) where.targetType = targetType;
   if (category && CATEGORY_ACTION_MAP[category]) {
     where.action = { in: CATEGORY_ACTION_MAP[category] };
+  }
+
+  // 添加搜索条件
+  if (search) {
+    if (searchMode === "exact") {
+      // 精确匹配：匹配操作人姓名、用户名、详情
+      where.OR = [
+        { detail: { equals: search } },
+        { username: { equals: search } },
+      ];
+    } else {
+      // 模糊搜索
+      where.OR = [
+        { detail: { contains: search } },
+        { username: { contains: search } },
+      ];
+    }
   }
 
   const [total, items] = await Promise.all([

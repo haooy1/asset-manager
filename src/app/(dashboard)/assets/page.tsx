@@ -5,11 +5,13 @@ import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, type AssetInfo, ASSET_STATUS, ASSET_CATEGORIES } from "@/modules/assets/types";
+import { useDialog } from "@/shared/utils/dialogs";
 
 function AssetListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const { confirm, alert, ConfirmDialog } = useDialog();
 
   const [data, setData] = useState<{ total: number; items: AssetInfo[] }>({ total: 0, items: [] });
   const [loading, setLoading] = useState(true);
@@ -91,18 +93,25 @@ function AssetListContent() {
    * 删除单条资产（二次确认）
    */
   const handleDelete = async (asset: AssetInfo) => {
-    if (!confirm(`确定要删除资产「${asset.name}」(${asset.assetNo}) 吗？此操作不可恢复。`)) return;
+    const ok = await confirm({
+      title: "删除资产",
+      message: `确定要删除资产「${asset.name}」(${asset.assetNo}) 吗？此操作不可恢复。`,
+      confirmText: "删除",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/assets/${asset.id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || "删除失败");
+        await alert({ title: "删除失败", message: err.message || "删除失败", type: "error" });
       } else {
         fetchData();
       }
     } catch {
-      alert("网络错误，请重试");
+      await alert({ title: "错误", message: "网络错误，请重试", type: "error" });
     }
     setDeleting(false);
   };
@@ -117,7 +126,14 @@ function AssetListContent() {
       .map((item) => item.name)
       .slice(0, 5);
     const more = selectedIds.size > 5 ? ` 等共 ${selectedIds.size} 条资产` : ` 共 ${selectedIds.size} 条资产`;
-    if (!confirm(`确定要删除以下资产吗？此操作不可恢复。\n\n${names.join("、")}${more}`)) return;
+    const ok = await confirm({
+      title: "批量删除资产",
+      message: `确定要删除以下资产吗？此操作不可恢复。\n\n${names.join("、")}${more}`,
+      confirmText: "删除",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
 
     setDeleting(true);
     let success = 0;
@@ -137,28 +153,61 @@ function AssetListContent() {
     }
 
     if (failed > 0) {
-      alert(`删除完成：成功 ${success} 条，失败 ${failed} 条`);
+      await alert({ title: "删除结果", message: `删除完成：成功 ${success} 条，失败 ${failed} 条`, type: "warning" });
     }
     setSelectedIds(new Set());
     fetchData();
     setDeleting(false);
   };
 
+  /**
+   * 普通用户发起领用申请
+   * @param asset - 要领用的资产信息
+   */
+  const handleBorrow = async (asset: AssetInfo) => {
+    const ok = await confirm({
+      title: "领用申请",
+      message: `确定要申请领用「${asset.name}」(${asset.assetNo}) 吗？`,
+      confirmText: "确认领用",
+      cancelText: "取消",
+      type: "info",
+    });
+    if (!ok) return;
+    try {
+      const res = await fetch("/api/approvals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "BORROW", assetId: asset.id, reason: "资产领用" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        await alert({ title: "领用申请失败", message: err.message || "领用申请失败", type: "error" });
+        return;
+      }
+      const result = await res.json();
+      await alert({ title: "提交成功", message: "领用申请已提交，请等待审批", type: "success" });
+      router.push(`/approvals/${result.data.id}`);
+    } catch {
+      await alert({ title: "错误", message: "网络错误，请重试", type: "error" });
+    }
+  };
+
   return (
     <div>
+      <ConfirmDialog />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">资产列表</h1>
         {!isEmployee && (
           <div className="flex gap-2">
             <Link
               href="/assets/import"
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:px-4"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 sm:px-4 transition-all duration-200 cursor-pointer"
             >
               📥 批量导入
             </Link>
             <Link
               href="/assets/new"
-              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:px-4"
+              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md sm:px-4 transition-all duration-200 cursor-pointer"
             >
               + 新增资产
             </Link>
@@ -203,13 +252,13 @@ function AssetListContent() {
           <button
             onClick={handleBatchDelete}
             disabled={deleting}
-            className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700 disabled:opacity-50"
+            className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700 disabled:opacity-50 transition-all duration-200 cursor-pointer"
           >
             {deleting ? "删除中..." : "批量删除"}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
           >
             取消选择
           </button>
@@ -263,7 +312,7 @@ function AssetListContent() {
                     <div className="flex items-center justify-between">
                       {docCount > 0 ? (
                         <Link href={`/assets/${asset.id}/documents`}
-                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline transition-all duration-200 cursor-pointer">
                           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
@@ -274,14 +323,21 @@ function AssetListContent() {
                       )}
                       <div className="flex gap-2">
                         <Link href={`/assets/${asset.id}`}
-                          className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                          className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
                           查看
                         </Link>
+                        {isEmployee && asset.status === "IDLE" && (
+                          <button
+                            onClick={() => handleBorrow(asset)}
+                            className="rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-100 transition-all duration-200 cursor-pointer">
+                            领用
+                          </button>
+                        )}
                         {isAdmin && (
                           <button
                             onClick={() => handleDelete(asset)}
                             disabled={deleting}
-                            className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 transition-all duration-200 cursor-pointer"
                           >
                             删除
                           </button>
@@ -361,7 +417,7 @@ function AssetListContent() {
                       <td className="px-4 py-3">
                         {docCount > 0 ? (
                           <Link href={`/assets/${asset.id}/documents`} title="查看附件文档"
-                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs">
+                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs transition-all duration-200 cursor-pointer">
                             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
@@ -373,16 +429,27 @@ function AssetListContent() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs">
+                          <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:underline text-xs transition-all duration-200 cursor-pointer">
                             查看
                           </Link>
+                          {isEmployee && asset.status === "IDLE" && (
+                            <>
+                              <span className="text-gray-300">|</span>
+                              <button
+                                onClick={() => handleBorrow(asset)}
+                                className="text-xs text-green-600 hover:underline transition-all duration-200 cursor-pointer"
+                              >
+                                领用
+                              </button>
+                            </>
+                          )}
                           {isAdmin && (
                             <>
                               <span className="text-gray-300">|</span>
                               <button
                                 onClick={() => handleDelete(asset)}
                                 disabled={deleting}
-                                className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                                className="text-xs text-red-600 hover:underline disabled:opacity-50 transition-all duration-200 cursor-pointer"
                               >
                                 删除
                               </button>

@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useDialog } from "@/shared/utils/dialogs";
 
 interface CategoryGroup {
   id: string;
@@ -50,8 +52,17 @@ interface ImportResult {
  */
 export default function ImportPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const { confirm, alert, ConfirmDialog } = useDialog();
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<CategoryGroup[]>([]);
+
+  // 普通用户无权批量导入，重定向到资产列表
+  useEffect(() => {
+    if (session?.user?.role === "EMPLOYEE") {
+      router.replace("/assets");
+    }
+  }, [session, router]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -142,7 +153,14 @@ export default function ImportPage() {
    */
   const handleRevoke = async () => {
     if (!result?.batchId) return;
-    if (!confirm("确定要撤销本次导入吗？这将删除该批次导入的所有资产。")) return;
+    const ok = await confirm({
+      title: "撤销导入",
+      message: "确定要撤销本次导入吗？这将删除该批次导入的所有资产。",
+      confirmText: "撤销",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
     setRevoking(true);
     setError("");
     try {
@@ -156,7 +174,7 @@ export default function ImportPage() {
       } else {
         setResult(null);
         setError("");
-        alert(data.message);
+        await alert({ title: "撤销成功", message: data.message, type: "success" });
       }
     } catch {
       setError("网络错误，请重试");
@@ -168,10 +186,11 @@ export default function ImportPage() {
 
   return (
     <div>
+      <ConfirmDialog />
       <div className="mb-6 flex items-center gap-4">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
         >
           ← 返回
         </button>
@@ -216,7 +235,7 @@ export default function ImportPage() {
             <li>单次最多导入 1000 行</li>
           </ol>
           <button onClick={handleDownloadTemplate}
-            className="mt-4 rounded-md border border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
+            className="mt-4 rounded-md border border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
             📥 下载 Excel 模板
           </button>
         </div>
@@ -307,13 +326,13 @@ export default function ImportPage() {
               <button
                 onClick={handleConfirm}
                 disabled={confirming || preview.validCount === 0}
-                className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300 transition-all duration-200 cursor-pointer"
               >
                 {confirming ? "导入中..." : `确认导入 (${preview.validCount} 条)`}
               </button>
               <button
                 onClick={() => { setPreview(null); setError(""); }}
-                className="rounded-md border border-gray-300 px-5 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                className="rounded-md border border-gray-300 px-5 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
               >
                 取消
               </button>
@@ -346,16 +365,16 @@ export default function ImportPage() {
               <button
                 onClick={handleRevoke}
                 disabled={revoking || result.success === 0}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300 transition-all duration-200 cursor-pointer"
               >
                 {revoking ? "撤销中..." : "撤销本次导入"}
               </button>
               <button onClick={() => router.push("/assets")}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 transition-all duration-200 cursor-pointer">
                 返回资产列表
               </button>
               <button onClick={() => { setResult(null); setError(""); }}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer">
                 继续导入
               </button>
             </div>

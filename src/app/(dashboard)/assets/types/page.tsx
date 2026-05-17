@@ -7,10 +7,12 @@ import {
   FIELD_TYPES, FIELD_TYPE_LABELS,
   type CategoryGroupInfo, type CustomFieldInfo, type FieldType,
 } from "@/modules/assets/custom-types";
+import { useDialog } from "@/shared/utils/dialogs";
 
 export default function AssetTypesPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { confirm, alert, ConfirmDialog } = useDialog();
   const isAdmin = session?.user?.role !== "EMPLOYEE";
 
   const [groups, setGroups] = useState<CategoryGroupInfo[]>([]);
@@ -98,7 +100,7 @@ export default function AssetTypesPage() {
    * 更新设备类型名称
    */
   const handleUpdateType = async (group: CategoryGroupInfo) => {
-    const newLabel = prompt("请输入新的设备类型名称:", group.label);
+    const newLabel = window.prompt("请输入新的设备类型名称:", group.label);
     if (!newLabel || newLabel === group.label) return;
     try {
       const res = await fetch(`/api/category-groups/${group.id}`, {
@@ -120,7 +122,14 @@ export default function AssetTypesPage() {
    * 删除自定义设备类型
    */
   const handleDeleteType = async (group: CategoryGroupInfo) => {
-    if (!confirm(`确定删除设备类型「${group.label}」吗？关联的自定义字段也将被删除。`)) return;
+    const ok = await confirm({
+      title: "删除设备类型",
+      message: `确定删除设备类型「${group.label}」吗？关联的自定义字段也将被删除。`,
+      confirmText: "删除",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/category-groups/${group.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("删除失败");
@@ -193,7 +202,14 @@ export default function AssetTypesPage() {
    * 删除自定义字段
    */
   const handleDeleteField = async (field: CustomFieldInfo) => {
-    if (!confirm(`确定删除字段「${field.label}」吗？`)) return;
+    const ok = await confirm({
+      title: "删除字段",
+      message: `确定删除字段「${field.label}」吗？`,
+      confirmText: "删除",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/fields/${field.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("删除失败");
@@ -224,11 +240,12 @@ export default function AssetTypesPage() {
 
   return (
     <div>
+      <ConfirmDialog />
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">字段配置</h1>
         {isAdmin && (
           <button onClick={() => setShowAddType(true)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md transition-all duration-200 cursor-pointer">
             + 新增设备类型
           </button>
         )}
@@ -248,7 +265,7 @@ export default function AssetTypesPage() {
                 <button
                   key={group.id}
                   onClick={() => setSelectedGroup(group)}
-                  className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${
                     selectedGroup?.id === group.id
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-700 hover:bg-gray-50"
@@ -287,18 +304,18 @@ export default function AssetTypesPage() {
                   {!selectedGroup.isBuiltin && isAdmin && (
                     <>
                       <button onClick={() => handleUpdateType(selectedGroup)}
-                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                        className="rounded-md border px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-all duration-200 cursor-pointer">
                         重命名
                       </button>
                       <button onClick={() => handleDeleteType(selectedGroup)}
-                        className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
+                        className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-all duration-200 cursor-pointer">
                         删除类型
                       </button>
                     </>
                   )}
                   {isAdmin && (
                     <button onClick={() => setShowAddField(true)}
-                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 hover:shadow-md transition-all duration-200 cursor-pointer">
                       + 新增字段
                     </button>
                   )}
@@ -327,11 +344,11 @@ export default function AssetTypesPage() {
                       {isAdmin && (
                         <div className="flex gap-2">
                           <button onClick={() => openEditField(field)}
-                            className="rounded border px-2 py-1 text-xs text-gray-500 hover:bg-gray-50">
+                            className="rounded border px-2 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-all duration-200 cursor-pointer">
                             编辑
                           </button>
                           <button onClick={() => handleDeleteField(field)}
-                            className="rounded border border-red-200 px-2 py-1 text-xs text-red-500 hover:bg-red-50">
+                            className="rounded border border-red-200 px-2 py-1 text-xs text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer">
                             删除
                           </button>
                         </div>

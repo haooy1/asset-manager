@@ -2,12 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@/modules/assets/types";
 import type { CategoryGroupInfo, CustomFieldInfo, CustomFieldValueInput } from "@/modules/assets/custom-types";
 
 export default function NewAssetPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
+
+  // 普通用户无权创建资产，重定向到资产列表
+  useEffect(() => {
+    if (session?.user?.role === "EMPLOYEE") {
+      router.replace("/assets");
+    }
+  }, [session, router]);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     assetNo: "",

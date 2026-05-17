@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useDialog } from "@/shared/utils/dialogs";
 
 interface SharedDoc {
   id: string;
@@ -51,6 +52,7 @@ export default function CategoryDocumentsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { confirm, ConfirmDialog } = useDialog();
 
   const [group, setGroup] = useState<CategoryGroupInfo | null>(null);
   const [docs, setDocs] = useState<SharedDoc[]>([]);
@@ -104,7 +106,14 @@ export default function CategoryDocumentsPage() {
   };
 
   const handleDelete = async (docId: string) => {
-    if (!confirm("确定要删除此文档吗？")) return;
+    const ok = await confirm({
+      title: "删除文档",
+      message: "确定要删除此文档吗？",
+      confirmText: "删除",
+      cancelText: "取消",
+      type: "danger",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/category-groups/${id}/documents?docId=${docId}`, { method: "DELETE" });
       if (res.ok) await load();
@@ -121,8 +130,9 @@ export default function CategoryDocumentsPage() {
 
   return (
     <div>
+      <ConfirmDialog />
       <div className="mb-6">
-        <button onClick={() => router.back()} className="mb-2 text-sm text-gray-500 hover:text-gray-700">
+        <button onClick={() => router.back()} className="mb-2 text-sm text-gray-500 hover:text-gray-700 transition-all duration-200 cursor-pointer">
           ← 返回
         </button>
         <h1 className="text-2xl font-bold text-gray-900">共享文档管理</h1>
@@ -142,8 +152,8 @@ export default function CategoryDocumentsPage() {
               上传后，该类型下所有资产均可查看和下载此文档（如用户手册、安全指南等）
             </p>
           </div>
-          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition ${
-            uploading ? "bg-gray-400 cursor-wait" : "bg-blue-600 hover:bg-blue-700"
+          <label className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-all duration-200 cursor-pointer ${
+            uploading ? "bg-gray-400 cursor-wait" : "bg-blue-600 hover:bg-blue-700 hover:shadow-md"
           }`}>
             {uploading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -203,7 +213,7 @@ export default function CategoryDocumentsPage() {
                     href={doc.filePath}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                    className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-all duration-200 hover:bg-blue-100 cursor-pointer"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -212,7 +222,7 @@ export default function CategoryDocumentsPage() {
                   </a>
                   <button
                     onClick={() => handleDelete(doc.id)}
-                    className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                    className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-all duration-200 hover:bg-red-100 cursor-pointer"
                   >
                     删除
                   </button>

@@ -49,6 +49,15 @@ const NAV_GROUPS = [
     title: "系统管理",
     items: [
       {
+        label: "个人设置",
+        href: "/profile",
+        icon: (
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        ),
+      },
+      {
         label: "组织管理",
         href: "/org",
         icon: (
@@ -89,6 +98,7 @@ const MOBILE_NAV = [
 ];
 
 const MORE_MENU_ITEMS = [
+  { label: "个人设置", href: "/profile", icon: "👤" },
   { label: "组织管理", href: "/org", icon: "👥" },
   { label: "字段配置", href: "/assets/types", icon: "⚙️" },
   { label: "操作日志", href: "/audit-logs", icon: "📋", adminOnly: true },
@@ -131,7 +141,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 space-y-4 px-3 py-4">
           {NAV_GROUPS.map((group) => {
             const visibleItems = group.items.filter(
-              item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types")
+              item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types" || item.href === "/profile")
             );
             if (visibleItems.length === 0) return null;
             return (
@@ -144,7 +154,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
                     return (
                       <Link key={item.href} href={item.href}
-                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-200 cursor-pointer ${
                           isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
                         }`}>
                         {item.icon}{item.label}
@@ -193,30 +203,30 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="md:hidden bg-gray-800 text-white border-t border-gray-700 z-40">
           <div className="px-3 py-2 space-y-1 max-h-[60vh] overflow-y-auto">
             {NAV_GROUPS.map((group) => {
-              const visibleItems = group.items.filter(
-                item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types")
-              );
-              if (visibleItems.length === 0) return null;
-              return (
-                <div key={group.title} className="py-1">
-                  <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    {group.title}
-                  </div>
-                  {visibleItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-                    return (
-                      <Link key={item.href} href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
-                          isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
-                        }`}>
-                        {item.icon}{item.label}
-                      </Link>
-                    );
-                  })}
+            const visibleItems = group.items.filter(
+              item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types" || item.href === "/profile")
+            );
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={group.title} className="py-1">
+                <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  {group.title}
                 </div>
-              );
-            })}
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  return (
+                    <Link key={item.href} href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-200 cursor-pointer ${
+                        isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700"
+                      }`}>
+                      {item.icon}{item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
           </div>
         </div>
       )}
@@ -253,12 +263,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <div className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
               <div className="px-4 py-2">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-1">系统功能</div>
-                {MORE_MENU_ITEMS.filter(item => !isEmployee || !item.adminOnly).map((item) => {
+                {MORE_MENU_ITEMS.filter(item => !isEmployee || (!item.adminOnly && item.href !== "/org" && item.href !== "/assets/types" || item.href === "/profile")).map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
                   return (
                     <Link key={item.href} href={item.href}
                       onClick={() => setMoreOpen(false)}
-                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-200 cursor-pointer ${
                         isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
                       }`}>
                       <span>{item.icon}</span>{item.label}

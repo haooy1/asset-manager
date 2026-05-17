@@ -250,7 +250,7 @@ export default function OrgPage() {
         <div className="flex gap-2 overflow-x-auto border-b pb-px">
           {(["branches", "departments", "users"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition ${
+              className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer ${
                 tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
               }`}>
               {t === "branches" ? "分支管理" : t === "departments" ? "部门管理" : "用户管理"}
@@ -259,7 +259,7 @@ export default function OrgPage() {
         </div>
         {tab !== "users" && (
           <button onClick={() => { setShowForm(true); setForm({ ...form, formType: tab === "branches" ? "branch" : "department", name: "", code: "", address: "", contact: "", branchId: "" }); setError(""); setMsg(""); }}
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:px-4">
+            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md sm:px-4 transition-all duration-200 cursor-pointer">
             + 新增{tab === "branches" ? "分支" : "部门"}
           </button>
         )}
@@ -293,8 +293,8 @@ export default function OrgPage() {
               </>
             )}
             <div className="flex gap-2">
-              <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">确认</button>
-              <button type="button" onClick={() => setShowForm(false)} className="rounded-md border px-4 py-2 text-sm">取消</button>
+              <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md transition-all duration-200 cursor-pointer">确认</button>
+              <button type="button" onClick={() => setShowForm(false)} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
             </div>
           </form>
         </div>
@@ -349,8 +349,8 @@ export default function OrgPage() {
             )}
             <div className="flex gap-2 pt-2">
               <button onClick={handleEditSave} disabled={editLoading}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50">{editLoading ? "保存中..." : "保存"}</button>
-              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm">取消</button>
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer">{editLoading ? "保存中..." : "保存"}</button>
+              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
             </div>
           </div>
         </div>
@@ -383,8 +383,8 @@ export default function OrgPage() {
             </div>
             <div className="flex gap-2 pt-2">
               <button onClick={handlePasswordSave} disabled={editLoading}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50">{editLoading ? "保存中..." : "保存"}</button>
-              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm">取消</button>
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 hover:shadow-md disabled:opacity-50 transition-all duration-200 cursor-pointer">{editLoading ? "保存中..." : "保存"}</button>
+              <button onClick={() => { setEditingUser(null); setEditMode(null); }} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer">取消</button>
             </div>
           </div>
         </div>
@@ -449,9 +449,9 @@ export default function OrgPage() {
                       {/* 管理员可编辑所有用户，普通用户只能编辑自己 */}
                       {(isAdmin || session?.user?.id === u.id) && (
                         <>
-                          <button onClick={() => openEdit(u, "info")} className="text-xs text-blue-600 hover:underline">编辑</button>
+                          <button onClick={() => openEdit(u, "info")} className="text-xs text-blue-600 hover:underline transition-all duration-200 cursor-pointer">编辑</button>
                           <span className="text-gray-300">|</span>
-                          <button onClick={() => openEdit(u, "password")} className="text-xs text-blue-600 hover:underline">
+                          <button onClick={() => openEdit(u, "password")} className="text-xs text-blue-600 hover:underline transition-all duration-200 cursor-pointer">
                             {isAdmin && session?.user?.id !== u.id ? "重置密码" : "修改密码"}
                           </button>
                         </>

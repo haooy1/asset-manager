@@ -89,14 +89,20 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState<TabKey>("login");
+  const [search, setSearch] = useState("");
+  const [searchMode, setSearchMode] = useState<"fuzzy" | "exact">("fuzzy");
 
-  const load = async (p: number, tab: TabKey) => {
+  const load = async (p: number, tab: TabKey, searchVal?: string, mode?: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       params.set("page", String(p));
       params.set("pageSize", "30");
       params.set("category", tab);
+      if (searchVal) {
+        params.set("search", searchVal);
+        params.set("searchMode", mode || "fuzzy");
+      }
       const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (!res.ok) return;
       const data = await res.json();
@@ -108,11 +114,22 @@ export default function AuditLogsPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(page, activeTab); }, [page, activeTab]); // eslint-disable-line
+  useEffect(() => { load(page, activeTab, search, searchMode); }, [page, activeTab, search, searchMode]); // eslint-disable-line
 
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     setPage(1);
+  };
+
+  const handleSearch = () => {
+    setPage(1);
+    load(1, activeTab, search, searchMode);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
   };
 
   const totalPages = Math.ceil(total / 30);
@@ -121,21 +138,58 @@ export default function AuditLogsPage() {
     <div>
       <h1 className="mb-4 text-2xl font-bold text-gray-900">操作日志</h1>
 
-      <div className="mb-4 flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${
+                activeTab === tab.key
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <span className="ml-3 text-xs text-gray-400">共 {total} 条</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={searchMode}
+            onChange={(e) => setSearchMode(e.target.value as "fuzzy" | "exact")}
+            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm cursor-pointer"
           >
-            {tab.label}
-          </button>
-        ))}
-        <span className="ml-3 text-xs text-gray-400">共 {total} 条</span>
+            <option value="fuzzy">模糊搜索</option>
+            <option value="exact">精确查找</option>
+          </select>
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="搜索操作人/详情..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-48 rounded-l-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleSearch}
+              className="rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+            >
+              🔍
+            </button>
+          </div>
+          {search && (
+            <button
+              onClick={() => { setSearch(""); setPage(1); }}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-all duration-200 cursor-pointer"
+            >
+              清除
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -237,10 +291,10 @@ export default function AuditLogsPage() {
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-center gap-2">
               <button disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-30">上一页</button>
+                className="rounded border px-3 py-1 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">上一页</button>
               <span className="text-sm text-gray-500">{page} / {totalPages}</span>
               <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="rounded border px-3 py-1 text-sm disabled:opacity-30">下一页</button>
+                className="rounded border px-3 py-1 text-sm disabled:opacity-30 hover:bg-gray-50 transition-all duration-200 cursor-pointer">下一页</button>
             </div>
           )}
         </>

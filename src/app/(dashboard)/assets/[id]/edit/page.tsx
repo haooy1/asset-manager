@@ -2,13 +2,22 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { ASSET_CATEGORIES, CATEGORY_LABELS, type AssetCategory } from "@/modules/assets/types";
 import type { CategoryGroupInfo, CustomFieldInfo, CustomFieldValueInput } from "@/modules/assets/custom-types";
 
 export default function EditAssetPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session } = useSession();
   const id = params.id as string;
+
+  // 普通用户无权编辑资产，重定向到资产详情页
+  useEffect(() => {
+    if (session?.user?.role === "EMPLOYEE") {
+      router.replace(`/assets/${id}`);
+    }
+  }, [session, router, id]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

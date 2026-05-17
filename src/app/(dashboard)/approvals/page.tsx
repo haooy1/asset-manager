@@ -7,10 +7,12 @@ import Link from "next/link";
 import { getApprovals } from "@/modules/approvals/services";
 import type { ApprovalInfo, ApprovalType, ApprovalStatus } from "@/modules/approvals/types";
 import { TYPE_LABELS, STATUS_LABELS, STATUS_COLORS } from "@/modules/approvals/types";
+import { useDialog } from "@/shared/utils/dialogs";
 
 export default function ApprovalListPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { confirm, alert, ConfirmDialog } = useDialog();
   const [items, setItems] = useState<ApprovalInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"my" | "pending" | "execute">("my");
@@ -44,7 +46,14 @@ export default function ApprovalListPage() {
   }, [view, session]);
 
   const handleCancel = async (approvalId: string) => {
-    if (!confirm("确认撤销该申请？撤销后资产将恢复为可领用状态。")) return;
+    const ok = await confirm({
+      title: "撤销申请",
+      message: "确认撤销该申请？撤销后资产将恢复为可领用状态。",
+      confirmText: "撤销",
+      cancelText: "取消",
+      type: "warning",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/approvals/${approvalId}`, {
         method: "POST",
@@ -53,14 +62,14 @@ export default function ApprovalListPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        alert(err.message || "撤销失败");
+        await alert({ title: "撤销失败", message: err.message || "撤销失败", type: "error" });
         return;
       }
       setItems(prev => prev.map(item =>
         item.id === approvalId ? { ...item, status: "CANCELLED" as ApprovalStatus } : item
       ));
     } catch {
-      alert("网络错误，请重试");
+      await alert({ title: "错误", message: "网络错误，请重试", type: "error" });
     }
   };
 
@@ -68,9 +77,10 @@ export default function ApprovalListPage() {
 
   return (
     <div>
+      <ConfirmDialog />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">审批管理</h1>
-        <Link href="/approvals/new" className="rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 sm:px-4">
+        <Link href="/approvals/new" className="rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 hover:shadow-md sm:px-4 transition-all duration-200 cursor-pointer">
           + 发起申请
         </Link>
       </div>
@@ -80,7 +90,7 @@ export default function ApprovalListPage() {
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer ${
               view === v
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -121,13 +131,13 @@ export default function ApprovalListPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/approvals/${ap.id}`}
-                      className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                      className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-all duration-200 cursor-pointer">
                       查看详情
                     </Link>
                     {view === "my" && ap.status === "PENDING" && (
                       <button
                         onClick={() => handleCancel(ap.id)}
-                        className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                        className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-all duration-200 cursor-pointer"
                       >
                         撤销
                       </button>
@@ -176,13 +186,13 @@ export default function ApprovalListPage() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <Link href={`/approvals/${ap.id}`}
-                          className="rounded px-3 py-1.5 text-blue-600 text-sm transition-colors hover:bg-blue-50 hover:text-blue-800">查看</Link>
+                          className="rounded px-3 py-1.5 text-blue-600 text-sm transition-all duration-200 hover:bg-blue-50 hover:text-blue-800 cursor-pointer">查看</Link>
                         {view === "my" && ap.status === "PENDING" && (
                           <>
                             <span className="mx-2 text-gray-300">|</span>
                             <button
                               onClick={() => handleCancel(ap.id)}
-                              className="bg-transparent border-0 cursor-pointer rounded px-3 py-1.5 text-red-500 text-sm transition-colors hover:bg-red-50 hover:text-red-700"
+                              className="bg-transparent border-0 cursor-pointer rounded px-3 py-1.5 text-red-500 text-sm transition-all duration-200 hover:bg-red-50 hover:text-red-700"
                             >
                               撤销
                             </button>
