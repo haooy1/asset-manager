@@ -30,8 +30,8 @@ export async function runReminderScan() {
 
     if (expiredWarranty.length > 0) {
       console.warn(`[提醒] ${expiredWarranty.length} 台设备维保已过期:`);
-      expiredWarranty.forEach((a: { assetNo: string; name: string; daysSinceExpiry: number }) => {
-        console.warn(`  - ${a.assetNo} ${a.name} 已过期 ${a.daysSinceExpiry} 天`);
+      expiredWarranty.forEach((a: { assetNo: string; name: string; daysUntilExpiry: number }) => {
+        console.warn(`  - ${a.assetNo} ${a.name} 已过期 ${Math.abs(a.daysUntilExpiry)} 天`);
       });
     }
 

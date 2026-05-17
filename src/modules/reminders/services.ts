@@ -88,8 +88,8 @@ export async function getExpiredWarrantyAssets() {
     name: a.name,
     warrantyExpiry: a.warrantyExpiry?.toISOString() ?? null,
     branchName: a.branch?.name ?? null,
-    daysSinceExpiry: a.warrantyExpiry
-      ? Math.ceil((now.getTime() - a.warrantyExpiry.getTime()) / (24 * 60 * 60 * 1000))
+    daysUntilExpiry: a.warrantyExpiry
+      ? -Math.ceil((now.getTime() - a.warrantyExpiry.getTime()) / (24 * 60 * 60 * 1000))
       : 0,
   }));
 }
@@ -136,9 +136,25 @@ export async function getDocumentReminders(daysThreshold = 30): Promise<Document
  */
 export async function getExpiredDocuments() {
   const now = new Date();
-  return db.assetDocument.findMany({
+  const docs = await db.assetDocument.findMany({
     where: { expiryDate: { lt: now } },
     include: { asset: { select: { assetNo: true, name: true } } },
     orderBy: { expiryDate: "asc" },
   });
+
+  return docs.map((d: {
+    id: string; name: string; fileName: string; assetId: string;
+    expiryDate: Date | null; asset: { assetNo: string; name: string };
+  }) => ({
+    id: d.id,
+    name: d.name,
+    fileName: d.fileName,
+    assetId: d.assetId,
+    assetNo: d.asset.assetNo,
+    assetName: d.asset.name,
+    expiryDate: d.expiryDate!.toISOString(),
+    daysUntilExpiry: d.expiryDate
+      ? -Math.ceil((now.getTime() - d.expiryDate.getTime()) / (24 * 60 * 60 * 1000))
+      : 0,
+  }));
 }
